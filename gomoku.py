@@ -27,8 +27,8 @@ class Step(object):
         self.percent = 1000
 
     def init_const(self):
-        self.width = 15
-        self.height = 15
+        self.width = 19
+        self.height = 19
         self.white = u"○"
         self.black = u"●"
 
@@ -322,6 +322,7 @@ class Gomoku(Step):
         Step.reset(self)
         self.his = []
         self.turn = 1
+        self.thinking = False
 
     def dump(self):
         self.children = []
@@ -365,6 +366,15 @@ class Gomoku(Step):
 
         print "Current {} score {} surplus {} scores {}".format(where, current.score(), current.crude.surplus, current.crude.scores)
         print "Counter {} score {} surplus {} scores {}".format(where, counter.score(), current.crude.surplus, counter.crude.scores)
+
+    def set(self, where):
+        if self.pos[where] != 0:
+            return
+        self.where = where
+        self.his.append(self.where)
+        self.pos[self.where] = self.turn
+        self.make_crude()
+        self.turn *= -1
 
     def test(self, where):
         step = Step(where=where, turn=self.turn, pos=copy.copy(self.pos))
@@ -431,18 +441,25 @@ class Gomoku(Step):
         return where
 
     def compute_pos(self):
+        self.thinking = True
+
+        def __result(where):
+            self.thinking = False
+            return where
+
         if self.win():
-            return None
+            return __result(None)
+
         print "Thinking ..."
         step = self.get_next(self.turn * -1)
         if not step:
             print "No more step..."
-            return None
+            return __result(None)
 
         if self.pos[step.where] != 0:
             print step.where
             raw_input()
-        return step.where
+        return __result(step.where)
 
     def get_pos(self,):
         if self.turn == 1:
