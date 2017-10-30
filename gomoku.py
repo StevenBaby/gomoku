@@ -441,25 +441,19 @@ class Gomoku(Step):
         return where
 
     def compute_pos(self):
-        self.thinking = True
-
-        def __result(where):
-            self.thinking = False
-            return where
-
         if self.win():
-            return __result(None)
+            return None
 
-        print "Thinking ..."
+        # print "Thinking ..."
         step = self.get_next(self.turn * -1)
         if not step:
-            print "No more step..."
-            return __result(None)
+            # print "No more step..."
+            return None
 
         if self.pos[step.where] != 0:
             print step.where
             raw_input()
-        return __result(step.where)
+        return step.where
 
     def get_pos(self,):
         if self.turn == 1:

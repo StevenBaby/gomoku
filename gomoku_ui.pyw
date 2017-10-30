@@ -5,6 +5,7 @@ import Tkinter
 import ttk
 import tkMessageBox 
 import dandan
+import traceback
 from PIL import Image
 from PIL import ImageTk
 
@@ -33,7 +34,7 @@ class GomokuUI(object):
     def initialize_bg(self):
         self.bg_imagepath = os.path.join(self.dirname, "skins", 'background.png')
         if not os.path.exists(self.bg_imagepath):
-            print "Warning: background image not exists."
+            # print "Warning: background image not exists."
             return
 
         self.bg_image = Image.open(self.bg_imagepath).convert('RGBA')
@@ -63,7 +64,7 @@ class GomokuUI(object):
 
         self.black_imagepath = os.path.join(self.dirname, "skins", 'black.png')
         if not os.path.exists(self.black_imagepath):
-            print "Warning: black chess image not exists."
+            # print "Warning: black chess image not exists."
             return
 
         self.black_image = Image.open(self.black_imagepath).convert('RGBA').resize(self.chess_size)
@@ -71,7 +72,7 @@ class GomokuUI(object):
 
         self.white_imagepath = os.path.join(self.dirname, "skins", 'white.png')
         if not os.path.exists(self.white_imagepath):
-            print "Warning: white chess image not exists."
+            # print "Warning: white chess image not exists."
             return
 
         self.white_image = Image.open(self.white_imagepath).convert('RGBA').resize(self.chess_size)
@@ -140,7 +141,7 @@ class GomokuUI(object):
         if turn == 0 and not chess:
             return
         if turn == 0:
-            print chess
+            # print chess
             # chess.label.distroy()
             return
 
@@ -161,10 +162,10 @@ class GomokuUI(object):
         if event.y not in prange:
             return None
 
-        print self.board_cell
+        # print self.board_cell
         x = (event.x - self.board_start) / self.board_cell
         y = (event.y - self.board_start) / self.board_cell
-        print event.x, event.y, x, y
+        # print event.x, event.y, x, y
 
         return int(x), int(y)
 
@@ -175,7 +176,6 @@ class GomokuUI(object):
             else:
                 tkMessageBox.showinfo("WIN", "YOU WIN!!!")
             return
-        print "Click", (event.x, event.y)
         where = self.get_click_pos(event)
         if not where:
             return
@@ -195,10 +195,14 @@ class GomokuUI(object):
             tkMessageBox.showinfo("LOSE", "YOU LOSE!!!")
 
     def click(self, event):
-        print "Click", (event.x, event.y)
-        self.bg.config(state="disabled")
-        self.play(event)
-        self.bg.config(state="enabled")
+        try:
+            # print "Click", (event.x, event.y)
+            self.bg.config(state="disabled")
+            self.play(event)
+            self.bg.config(state="enabled")
+        except Exception:
+            with open("dump.dat", "w") as f:
+                f.write(traceback.format_exc())
 
     def run(self):
         self.root.mainloop()
