@@ -4,7 +4,9 @@ requirements
 =============
 
 numpy
-colorama | for console display
+
+colorama for console display
+
 dandan
 
 history
