@@ -190,7 +190,8 @@ class GomokuUI(tk.Tk):
         context_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         context_menu.add_command(label="Reset", command=self.reset)
         context_menu.add_command(label="Refresh", command=self.refresh)
-        context_menu.add_command(label="Analysis", command=self.analysis)
+        if self.conf.debug:
+            context_menu.add_command(label="Analysis", command=self.analysis)
         context_menu.add_separator()
         context_menu.add_cascade(label="Mode", menu=mode_menu)
         context_menu.add_cascade(label="View", menu=view_menu)
@@ -201,7 +202,8 @@ class GomokuUI(tk.Tk):
         game_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         game_menu.add_command(label="Reset", command=self.reset)
         game_menu.add_command(label="Refresh", command=self.refresh)
-        game_menu.add_command(label="Analysis", command=self.analysis)
+        if self.conf.debug:
+            game_menu.add_command(label="Analysis", command=self.analysis)
 
         game_menu.add_separator()
         game_menu.add_command(label="Save", command=self.dump)
@@ -448,6 +450,7 @@ class GomokuUI(tk.Tk):
 
         if self.conf.mode == self.MODE_AI:
             self.compute_pos()
+        self.statusbar.reset()
 
     def click(self, event):
         if "disabled" in self.bg.state():

@@ -17,15 +17,15 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.5.0"
+__VERSION__ = "0.5.1"
 colorama.init(autoreset=True)
 
 
 class Step(object):
 
     def init_settings(self):
-        self.max_depth = 2
-        self.max_step = 4
+        self.max_depth = 0
+        self.max_step = 20
         self.percent = 1000
 
     def init_const(self):
@@ -264,7 +264,7 @@ class Step(object):
         for where in whole:
             xx, yy = where
 
-            ws = [(x, y) for x in xrange(xx - 2, xx + 3) for y in xrange(yy - 2, yy + 3) if x in self.wrange and y in self.hrange and self.pos[(x, y)] == 0 and (x, y) not in wheres]
+            ws = [(x, y) for x in xrange(xx - 1, xx + 2) for y in xrange(yy - 1, yy + 2) if x in self.wrange and y in self.hrange and self.pos[(x, y)] == 0 and (x, y) not in wheres]
             for w in ws:
                 wheres[w] = True
         return wheres
@@ -278,43 +278,28 @@ class Step(object):
         if (self.pos == 0).sum() == self.width * self.height:
             return Step(where=(self.width // 2, self.height // 2), turn=turn * -1, pos=copy.copy(self.pos))
 
-        self.children = []
-
+        children = []
         wheres = self.get_wheres()
         for where in wheres.keys():
-            step = Step(where=where, turn=turn, pos=copy.copy(self.pos))
-            if depth == 0:
-                step.parent = None
-            else:
-                step.parent = self
-            logger.info("Step turn %s where %s depth %s score %s", step.turn, step.where, depth, step.score())
+            current = Step(where=where, turn=turn, pos=copy.copy(self.pos))
+            counter = Step(where=where, turn=turn * -1, pos=copy.copy(self.pos))
+            # first = current if current.score() >= counter.score() else counter
+            # second = current if current != first else counter
+            children.append(current)
+            children.append(counter)
 
-            if step.win():
-                logger.info("Step turn %s where %s depth %s win", step.turn, step.where, depth)
-                return step
-            self.children.append(step)
-
-        steps = sorted(self.children, key=lambda e: [e.score(), random.random()], reverse=True)[:self.max_step]
-        if depth >= self.max_depth:
+        steps = sorted(children, key=lambda e: [e.score(), random.random()], reverse=True)[:self.max_step]
+        if depth >= self.max_depth or steps[0].win():
             return steps[0]
 
-        result = None
         substeps = []
         for step in steps:
             substep = step.get_next(turn=turn * -1, depth=depth + 1)
-            if substep.win():
-                result = substep
-                break
+            substep.parent = step
             substeps.append(substep)
 
-        if not result:
-            result = sorted(substeps, key=lambda e: [e.score(), random.random()], reverse=True)[0]
-
-        step = result
-        while True:
-            if step.parent.parent is None:
-                return step
-            step = step.parent
+        step = sorted(substeps, key=lambda e: [e.score(), random.random()], reverse=True)[0]
+        return step.parent
 
     def test(self):
         self.show()
