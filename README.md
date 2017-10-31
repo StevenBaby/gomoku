@@ -14,6 +14,8 @@ pillow | for gui image display
 history
 =======
 
+2017-10-31 0.4.1 enhance ai a little
+
 2017-10-31 0.4.0 add about information, just put version on board
 
 2017-10-31 0.3.1 fix bug.

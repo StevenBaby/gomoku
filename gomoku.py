@@ -17,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.4.0"
+__VERSION__ = "0.4.1"
 colorama.init(autoreset=True)
 
 
@@ -25,7 +25,7 @@ class Step(object):
 
     def init_settings(self):
         self.max_depth = 2
-        self.max_step = 6
+        self.max_step = 8
         self.percent = 1000
 
     def init_const(self):
@@ -285,7 +285,7 @@ class Step(object):
             step = (first, second)
             self.children.append(step)
 
-        steps = sorted(self.children, key=lambda e: [e[0].score(), e[1].score(), e[0].turn, random.random()], reverse=True)[:self.max_step]
+        steps = sorted(self.children, key=lambda e: [e[0].score(), e[1].score(), e[0].turn * -1, random.random()], reverse=True)[:self.max_step]
         if depth >= self.max_depth or steps[0][0].win():
             return steps[0][0]
 
