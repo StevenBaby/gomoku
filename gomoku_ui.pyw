@@ -22,18 +22,18 @@ class AboutWindow(tk.Toplevel):
         self.iconpath = os.path.join(dirname, "favicon.ico")
         self.iconbitmap(self.iconpath)
 
-        label = tk.Label(self, text="This is About window")
-        label.pack(side="top", fill="both", expand=True, padx=100, pady=100)
-
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
 
-        width = self.winfo_width()
-        height = self.winfo_height()
+        width = 320
+        height = 200
         x = (screen_width / 2) - (width / 2)
         y = (screen_height / 2) - (height / 2)
 
         self.geometry('%dx%d+%d+%d' % (width, height, x, y))
+
+        label = tk.Label(self, text="Gomoku Version {}".format(gomoku.__VERSION__))
+        label.place(x=50, y=80)
 
 
 class StatusBar(tk.Frame):
