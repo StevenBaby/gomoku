@@ -178,6 +178,7 @@ class GomokuUI(tk.Tk):
         menu.add_cascade(label="Help", menu=help_menu)
 
         context_menu.add_command(label="Back", command=self.back)
+        context_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         context_menu.add_command(label="Reset", command=self.reset)
         context_menu.add_separator()
         context_menu.add_cascade(label="Mode", menu=mode_menu)
@@ -186,6 +187,7 @@ class GomokuUI(tk.Tk):
         context_menu.add_command(label="Exit", command=lambda: sys.exit())
 
         game_menu.add_command(label="Back", command=self.back)
+        game_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         game_menu.add_command(label="Reset", command=self.reset)
         game_menu.add_cascade(label="Mode", menu=mode_menu)
         game_menu.add_command(label="Exit", command=lambda: sys.exit())
@@ -313,13 +315,13 @@ class GomokuUI(tk.Tk):
         yy = event.y_root - self.bg.winfo_rooty()
         # self.logger.debug("Click position %s, %s", xx, yy)
 
-        if xx < self.board_start:
+        if xx <= self.board_start:
             return None
-        if xx > self.board_end:
+        if xx >= self.board_end:
             return None
-        if yy < self.board_start:
+        if yy <= self.board_start:
             return None
-        if yy > self.board_end:
+        if yy >= self.board_end:
             return None
 
         x = (xx - self.board_start) / self.board_cell
@@ -344,15 +346,22 @@ class GomokuUI(tk.Tk):
 
     def compute_pos(self):
         self.statusbar.set_text("Thinking...")
+        self.bg.state(["disabled"])
+        self.update()
+
         self.update()
         where = self.gomoku.compute_pos()
         self.statusbar.reset()
         if not where:
+            self.bg.state(["!disabled"])
+            self.update()
             return
         self.set_chess(where, self.gomoku.turn)
         self.gomoku.set(where)
         if self.gomoku.win():
             self.show_win_message()
+        self.bg.state(["!disabled"])
+        self.update()
 
     def back(self):
         where = self.gomoku.back()
@@ -360,7 +369,7 @@ class GomokuUI(tk.Tk):
             tkMessageBox.showinfo("WARNING", "NO MORE STEP TO BACK!!!")
         self.set_chess(where, 0)
 
-        if self.mode == self.MODE_AI:
+        if self.conf.mode == self.MODE_AI:
             where = self.gomoku.back()
             if not where:
                 return
@@ -389,9 +398,7 @@ class GomokuUI(tk.Tk):
         if not where:
             return
         try:
-            self.bg.state(["disabled"])
             self.play(where)
-            self.bg.state(["!disabled"])
         except Exception:
             self.logger.fatal(traceback.format_exc())
 

@@ -14,7 +14,9 @@ pillow | for gui image display
 history
 =======
 
-2017-10-31 0.2.1 add several function  for gui
+2017-10-31 0.3.1 fix bug.
+
+2017-10-31 0.3.0 add several function  for gui
 
 2017-10-31 0.2.0 add simple tkinter gui for this game, support click mouse
 

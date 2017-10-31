@@ -17,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.2.1"
+__VERSION__ = "0.3.1"
 colorama.init(autoreset=True)
 
 
