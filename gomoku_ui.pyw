@@ -187,7 +187,7 @@ class GomokuUI(tk.Tk):
         menu.add_cascade(label="Help", menu=help_menu)
 
         context_menu.add_command(label="Back", command=self.back)
-        context_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
+        context_menu.add_command(label="Hint", command=self.hint)
         context_menu.add_command(label="Reset", command=self.reset)
         context_menu.add_command(label="Refresh", command=self.refresh)
         if self.conf.debug:
@@ -199,7 +199,7 @@ class GomokuUI(tk.Tk):
         context_menu.add_command(label="Exit", command=lambda: sys.exit())
 
         game_menu.add_command(label="Back", command=self.back)
-        game_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
+        game_menu.add_command(label="Hint", command=self.hint)
         game_menu.add_command(label="Reset", command=self.reset)
         game_menu.add_command(label="Refresh", command=self.refresh)
         if self.conf.debug:
@@ -424,6 +424,11 @@ class GomokuUI(tk.Tk):
         self.bg.state(["!disabled"])
         self.update()
 
+    def hint(self):
+        self.compute_pos()
+        if self.conf.mode == self.MODE_AI:
+            self.compute_pos()
+
     def back(self):
         where = self.gomoku.back()
         if not where:
@@ -510,9 +515,15 @@ class GomokuUI(tk.Tk):
         if event.keycode == 83 and event.char not in ("S", 's'):
             self.logger.info("Control S pressed")
             self.dump()
+        if event.keycode == 72 and event.char not in ("H", 'h'):
+            self.logger.info("Control H pressed")
+            self.hint()
 
     def analysis_file(self, filename):
         logger = self.logger
+        logger.debug("------------------------------------------------")
+        logger.debug("analysis filename %s", filename)
+
         basename = os.path.basename(filename).split(".")[0]
 
         match = re.match(r"(?P<count>.+)_(?P<name>.+)_(?P<length>\d+)_(?P<type>\d+)", basename)
@@ -520,6 +531,10 @@ class GomokuUI(tk.Tk):
             return
         self.gomoku.load(filename)
         self.refresh()
+
+        self.gomoku.turn *= -1
+        self.gomoku.make_crude()
+        self.gomoku.turn *= -1
         score = self.gomoku.score()
 
         logger.debug("TYPE {} SCORE {}".format(basename, score))
@@ -554,10 +569,10 @@ class GomokuUI(tk.Tk):
                 lengths = count[length]
                 for name in lengths:
                     scores = lengths[name]
-                    score = "/"
+                    score = ""
                     scores = sorted(scores.items(), key=lambda e: e[1], reverse=True)
                     for type, value in scores:
-                        score += "{}:{}/".format(type, value)
+                        score += "[{}:{}] ".format(type, value)
                     table.body[name][length] = score
 
             for name in table.body.keys():

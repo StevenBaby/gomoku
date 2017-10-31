@@ -17,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.5.1"
+__VERSION__ = "0.5.2"
 colorama.init(autoreset=True)
 
 
@@ -152,12 +152,20 @@ class Step(object):
         self.crude = crude
 
     def make_orient(self, orient):
+        logger = logging.getLogger("gomoku")
         pos = self.pos
         turn = self.turn
         orient.score = 0
         orient.dead = 0
         orient.point = 0
         orient.cont = []
+
+        orient.type1 = 0
+        orient.type2 = 0
+        orient.type3 = 0
+        orient.type4 = 0
+        orient.type5 = 0
+        orient.type6 = 0
 
         for where in orient.range:
             if pos[where] == turn and not orient.point:
@@ -187,11 +195,13 @@ class Step(object):
                 break
 
         orient.dead = (orient.type6 or 0)
-        orient.score += (orient.type1 or 0) * 100
-        orient.score += (orient.type2 or 0) * 80
-        orient.score += (orient.type3 or 0) * 20
-        orient.score += (orient.type4 or 0) * 5
-        orient.score += (orient.type5 or 0)
+        orient.score += orient.type1 * 100
+        orient.score += orient.type2 * 90
+        orient.score += orient.type3 * 5
+        orient.score += orient.type4 * 20
+        orient.score += orient.type5
+
+        logger.debug("orient %s", orient)
 
     def make_direction(self, direction):
         direction.score = 0
@@ -213,8 +223,10 @@ class Step(object):
             direction.range.extend(orient.cont)
 
     def make_crude(self,):
+        logger = logging.getLogger("gomoku")
         self.reset_crude()
         crude = self.crude
+
         crude.score = 0
         crude.surplus = 0
         crude.win = False
@@ -231,16 +243,18 @@ class Step(object):
                 direction.win = True
 
             crude.directions.append(direction)
-            crude.directions = sorted(crude.directions, key=lambda e: e.score, reverse=True)[:2]
-            crude.scores = [var.score for var in crude.directions]
+            crude.directions = sorted(crude.directions, key=lambda e: e.score, reverse=True)
+            crude.scores = [var.score for var in crude.directions][:2]
             if direction.win:
                 crude.win = True
 
         crude.score = crude.scores[0]
-        crude.surplus = crude.scores[1] // 2
-        crude.score += crude.surplus
+        for var in xrange(1, len(crude.scores)):
+            score = crude.scores[var]
+            crude.score += int(score / (var * 2))
+            logger.debug(crude.score)
         if crude.win:
-            crude.score += 200
+            self.crude.score += 1000
         return crude.score
 
     def score(self):
@@ -264,7 +278,7 @@ class Step(object):
         for where in whole:
             xx, yy = where
 
-            ws = [(x, y) for x in xrange(xx - 1, xx + 2) for y in xrange(yy - 1, yy + 2) if x in self.wrange and y in self.hrange and self.pos[(x, y)] == 0 and (x, y) not in wheres]
+            ws = [(x, y) for x in xrange(xx - 2, xx + 3) for y in xrange(yy - 2, yy + 3) if x in self.wrange and y in self.hrange and self.pos[(x, y)] == 0 and (x, y) not in wheres]
             for w in ws:
                 wheres[w] = True
         return wheres
@@ -382,7 +396,6 @@ class Gomoku(Step):
         data.turn = self.turn
         data.where = self.where
         data.his = self.his
-        data.crude = self.crude
         dandan.value.put_pickle(data, filename)
 
         self.logger.info("dump > {}".format(filename))
@@ -402,7 +415,6 @@ class Gomoku(Step):
         self.turn = data.turn
         self.his = data.his
         self.where = data.where
-        self.crude = data.crude
 
     def back(self):
         if len(self.his) < 1:
