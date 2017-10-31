@@ -17,15 +17,15 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.6.0"
+__VERSION__ = "0.6.1"
 colorama.init(autoreset=True)
 
 
 class Step(object):
 
     def init_settings(self):
-        self.max_depth = 3
-        self.max_step = 4
+        self.max_depth = 0
+        self.max_step = 8
         self.percent = 1000
 
     def init_const(self):

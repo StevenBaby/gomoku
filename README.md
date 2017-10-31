@@ -16,7 +16,9 @@ flask | for debug server
 history
 =======
 
-2017-10-31 0.6.0 enhance AI more intelligence
+2017-11-01 0.6.1 fix bug
+
+2017-11-01 0.6.0 enhance AI more intelligence
 
 2017-10-31 0.5.2 try to enhance AI but not success
 
