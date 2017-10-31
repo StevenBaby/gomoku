@@ -17,15 +17,15 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.5.2"
+__VERSION__ = "0.6.0"
 colorama.init(autoreset=True)
 
 
 class Step(object):
 
     def init_settings(self):
-        self.max_depth = 0
-        self.max_step = 20
+        self.max_depth = 3
+        self.max_step = 4
         self.percent = 1000
 
     def init_const(self):
@@ -152,12 +152,10 @@ class Step(object):
         self.crude = crude
 
     def make_orient(self, orient):
-        logger = logging.getLogger("gomoku")
+        # logger = logging.getLogger("gomoku")
         pos = self.pos
         turn = self.turn
         orient.score = 0
-        orient.dead = 0
-        orient.point = 0
         orient.cont = []
 
         orient.type1 = 0
@@ -168,7 +166,7 @@ class Step(object):
         orient.type6 = 0
 
         for where in orient.range:
-            if pos[where] == turn and not orient.point:
+            if pos[where] == turn and not orient.type3:
                 orient.cont.append(where)
                 orient.type1 += 1
                 continue
@@ -177,16 +175,15 @@ class Step(object):
                 orient.type2 += 1
                 continue
 
-            elif pos[where] == 0 and not orient.point:
+            elif pos[where] == 0 and not orient.type3:
                 orient.type3 += 1
-                orient.point += 1
                 continue
 
             elif pos[where] == 0:
                 orient.type4 += 1
                 continue
 
-            elif pos[where] == turn * -1 and orient.point:
+            elif pos[where] == turn * -1 and orient.type3:
                 orient.type5 += 1
                 break
 
@@ -194,33 +191,87 @@ class Step(object):
                 orient.type6 += 1
                 break
 
-        orient.dead = (orient.type6 or 0)
-        orient.score += orient.type1 * 100
-        orient.score += orient.type2 * 90
-        orient.score += orient.type3 * 5
-        orient.score += orient.type4 * 20
-        orient.score += orient.type5
+    def score_direction(self, direction):
+        logger = logging.getLogger("gomoku")
+        del direction["orient"]
+        direction.win = False
 
-        logger.debug("orient %s", orient)
+        length = len(direction.range)
+        dead = direction.type6
+
+        # logger.debug("length %s dead %s", length, dead)
+        if dead >= 2 and length < 5:
+            direction.score = 0
+            return
+
+        if length >= 5:  # S5
+            direction.score = 120000
+            direction.win = True
+            return
+
+        scores = {
+            # dead 0
+            0: {  # length
+                4: 50000,
+                3: 15000,
+                2: 6000,
+                1: 2000,
+            },
+            # dead 1
+            1: {  # length
+                4: 10000,
+                3: 4000,
+                2: 1000,
+                1: 100,
+            },
+        }
+
+        direction.score = scores[dead][length]
+        if length == 4:
+            return
+
+        away = direction.type2
+        aways = {
+            0: {
+                3: 15000,
+                2: 6000,
+                1: 2000,
+            },
+            1: {
+                3: 4000,
+                2: 1000,
+                1: 100,
+            },
+        }
+        if away:
+            direction.score += aways[dead][length]
 
     def make_direction(self, direction):
         direction.score = 0
         direction.win = False
         direction.range = [self.where]
-        direction.dead = 0
-        direction.point = 0
+
+        direction.type1 = 0
+        direction.type2 = 0
+        direction.type3 = 0
+        direction.type4 = 0
+        direction.type5 = 0
+        direction.type6 = 0
+
         for name in direction.orient:
             orient = direction.orient[name]
             orient.name = name
             orient.direction = direction.name
             self.make_orient(orient)
 
-            direction.dead += orient.dead
-            direction.point += orient.point
-            direction.score += orient.score
-            if direction.dead > 1 and len(direction.range) < 5:
-                direction.score = 0
             direction.range.extend(orient.cont)
+
+            direction.type1 += orient.type1
+            direction.type2 += orient.type2
+            direction.type3 += orient.type3
+            direction.type4 += orient.type4
+            direction.type5 += orient.type5
+            direction.type6 += orient.type6
 
     def make_crude(self,):
         logger = logging.getLogger("gomoku")
@@ -237,24 +288,18 @@ class Step(object):
             direction = crude.direction[name]
             direction.name = name
             self.make_direction(direction)
-
-            if len(direction.range) >= 5:
-                crude.range = direction.range
-                direction.win = True
-
+            self.score_direction(direction)
+            # logger.debug(direction)
+            if direction.win:
+                crude.win = True
             crude.directions.append(direction)
             crude.directions = sorted(crude.directions, key=lambda e: e.score, reverse=True)
             crude.scores = [var.score for var in crude.directions][:2]
-            if direction.win:
-                crude.win = True
 
-        crude.score = crude.scores[0]
-        for var in xrange(1, len(crude.scores)):
-            score = crude.scores[var]
-            crude.score += int(score / (var * 2))
-            logger.debug(crude.score)
         if crude.win:
-            self.crude.score += 1000
+            crude.score = crude.scores[0]
+        else:
+            crude.score = sum(crude.scores)
         return crude.score
 
     def score(self):
@@ -277,7 +322,6 @@ class Step(object):
         wheres = {}
         for where in whole:
             xx, yy = where
-
             ws = [(x, y) for x in xrange(xx - 2, xx + 3) for y in xrange(yy - 2, yy + 3) if x in self.wrange and y in self.hrange and self.pos[(x, y)] == 0 and (x, y) not in wheres]
             for w in ws:
                 wheres[w] = True
@@ -295,40 +339,27 @@ class Step(object):
         children = []
         wheres = self.get_wheres()
         for where in wheres.keys():
-            current = Step(where=where, turn=turn, pos=copy.copy(self.pos))
-            counter = Step(where=where, turn=turn * -1, pos=copy.copy(self.pos))
-            # first = current if current.score() >= counter.score() else counter
-            # second = current if current != first else counter
-            children.append(current)
-            children.append(counter)
+            current = Step(where=where, pos=copy.copy(self.pos), turn=turn, )
+            counter = Step(where=where, pos=copy.copy(self.pos), turn=turn * -1, )
+            pair = sorted([current, counter], key=lambda e: [e.score(), e.turn * turn], reverse=True)
+            children.append(pair)
 
-        steps = sorted(children, key=lambda e: [e.score(), random.random()], reverse=True)[:self.max_step]
-        if depth >= self.max_depth or steps[0].win():
-            return steps[0]
+        steps = sorted(children,
+                       reverse=True,
+                       key=lambda e: [e[0].score(), e[1].score(), random.random()],)[:self.max_step]
+        logger.debug([(e[0].score(), e[1].score()) for e in steps])
+
+        if depth >= self.max_depth or steps[0][0].win():
+            return steps[0][0]
 
         substeps = []
-        for step in steps:
+        for step, _ in steps:
             substep = step.get_next(turn=turn * -1, depth=depth + 1)
             substep.parent = step
             substeps.append(substep)
 
         step = sorted(substeps, key=lambda e: [e.score(), random.random()], reverse=True)[0]
         return step.parent
-
-    def test(self):
-        self.show()
-        self.reset_crude()
-        for name in self.crude.direction:
-            for var in self.crude.direction[name].orient:
-                orient = self.crude.direction[name].orient[var]
-                for where in orient.range:
-                    if self.pos[where] != 0:
-                        break
-                    self.pos[where] = self.turn
-                    self.show()
-                    print name, var, where
-                    raw_input()
-        return
 
 
 class Gomoku(Step):
@@ -447,10 +478,6 @@ class Gomoku(Step):
         self.make_crude()
         self.turn *= -1
 
-    def test(self, where):
-        step = Step(where=where, turn=self.turn, pos=copy.copy(self.pos))
-        step.test()
-
     def input_pos(self,):
         while True:
             try:
@@ -533,15 +560,9 @@ class Gomoku(Step):
         else:
             return self.compute_pos()
 
-    def statistic(self):
-        print "Count None:", (self.pos == 0).sum()
-        print "Count Black:", (self.pos == 1).sum()
-        print "Count White:", (self.pos == -1).sum()
-
     def play(self, ):
         while True:
             self.show()
-            # self.statistic()
             where = self.get_pos()
             if not where:
                 raw_input()
@@ -562,10 +583,10 @@ class Gomoku(Step):
             self.turn *= -1
 
 
-def main():
-    gomoku = Gomoku()
-    gomoku.play()
+# def main():
+#     gomoku = Gomoku()
+#     gomoku.play()
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

@@ -16,6 +16,8 @@ flask | for debug server
 history
 =======
 
+2017-10-31 0.6.0 enhance AI more intelligence
+
 2017-10-31 0.5.2 try to enhance AI but not success
 
 2017-10-31 0.5.0 and save and open file for game and enhance AI and fix bug and a web server only for debug
