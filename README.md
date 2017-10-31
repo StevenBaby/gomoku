@@ -14,11 +14,12 @@ pillow | for gui image display
 history
 =======
 
-2017-10-31 add simple tkinter gui for this game, support click mouse
+2017-10-31 0.2.1 add several function  for gui
+2017-10-31 0.2.0 add simple tkinter gui for this game, support click mouse
 
 <img src="https://raw.githubusercontent.com/StevenKjp/gomoku/master/screenshot/screenshot2.jpg" width = "400" height = "430" alt="screenshot" align=center />
 
-2017-10-30 first version of this game, only console or terminal use game
+2017-10-30 0.1.0 first version of this game, only console or terminal use game
 
 <img src="https://raw.githubusercontent.com/StevenKjp/gomoku/master/screenshot/screenshot.png" width = "400" height = "490" alt="screenshot" align=center />
 

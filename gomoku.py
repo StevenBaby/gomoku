@@ -8,6 +8,8 @@ import dandan
 import copy
 import time
 import random
+import logging
+import logging.config
 import colorama
 import traceback
 
@@ -15,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.1.0"
+__VERSION__ = "0.2.1"
 colorama.init(autoreset=True)
 
 
@@ -23,7 +25,7 @@ class Step(object):
 
     def init_settings(self):
         self.max_depth = 2
-        self.max_step = 4
+        self.max_step = 6
         self.percent = 1000
 
     def init_const(self):
@@ -317,6 +319,45 @@ class Gomoku(Step):
     def __init__(self):
         Step.__init__(self)
         self.reset()
+        self.init_logger()
+
+    def init_logger(self):
+        filename = os.path.abspath(__file__)
+        dirname = os.path.dirname(filename)
+        logfile = os.path.join(dirname, "gomoku.log")
+
+        LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': True,
+            'formatters': {
+                'verbose': {
+                    # 'format': '[%(asctime)s] [%(name)s] [%(process)d] [%(module)s] [%(funcName)s] [%(lineno)d]  [%(levelname)s] | %(message)s'
+                    'format': '[%(module)s] [%(lineno)d] [%(levelname)s] | %(message)s'
+                },
+            },
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'verbose',
+                    "level": "DEBUG",
+                },
+                'file': {
+                    'class': 'logging.FileHandler',
+                    'formatter': 'verbose',
+                    'filename': logfile,
+                    "level": "INFO",
+                },
+            },
+            'loggers': {
+                'gomoku': {
+                    'handlers': ['console', "file", ],
+                    'level': "DEBUG",
+                    'propagate': True,
+                },
+            },
+        }
+        logging.config.dictConfig(LOGGING)
+        self.logger = logging.getLogger("gomoku")
 
     def reset(self):
         Step.reset(self)
@@ -328,7 +369,7 @@ class Gomoku(Step):
         self.children = []
         filename = os.path.abspath('dump.bin')
         dandan.value.put_pickle(self, filename)
-        print "dump > {}".format(filename)
+        self.logger.info("dump > {}".format(filename))
 
     def load(self):
         filename = os.path.abspath('dump.bin')
@@ -341,19 +382,18 @@ class Gomoku(Step):
         self.his = data.his
         self.where = data.where
         self.crude = data.crude
-        self.show()
 
     def back(self):
         if len(self.his) < 1:
-            print "no more step to back"
-            return
+            self.logger.warning("No more step to back")
+            return None
 
         self.reset_crude()
-        self.pos[self.his[-1]] = 0
+        where = self.his[-1]
+        self.pos[where] = 0
         self.his.pop()
         self.turn *= -1
-
-        self.show()
+        return where
 
     def info(self, where):
         pos = copy.copy(self.pos)
@@ -363,9 +403,7 @@ class Gomoku(Step):
         pos = copy.copy(self.pos)
         pos[where] = 0
         counter = Step(where=where, turn=self.turn * -1, pos=pos)
-
-        print "Current {} score {} surplus {} scores {}".format(where, current.score(), current.crude.surplus, current.crude.scores)
-        print "Counter {} score {} surplus {} scores {}".format(where, counter.score(), current.crude.surplus, counter.crude.scores)
+        return current, counter
 
     def set(self, where):
         if self.pos[where] != 0:
@@ -444,7 +482,8 @@ class Gomoku(Step):
         if self.win():
             return None
 
-        # print "Thinking ..."
+        logger = self.logger
+        logger.debug("Thinking ...")
         step = self.get_next(self.turn * -1)
         if not step:
             # print "No more step..."
