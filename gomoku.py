@@ -17,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.4.1"
+__VERSION__ = "0.5.0"
 colorama.init(autoreset=True)
 
 
@@ -25,7 +25,7 @@ class Step(object):
 
     def init_settings(self):
         self.max_depth = 2
-        self.max_step = 8
+        self.max_step = 4
         self.percent = 1000
 
     def init_const(self):
@@ -172,7 +172,7 @@ class Step(object):
             elif pos[where] == 0 and not orient.point:
                 orient.type3 += 1
                 orient.point += 1
-                break
+                continue
 
             elif pos[where] == 0:
                 orient.type4 += 1
@@ -188,7 +188,7 @@ class Step(object):
 
         orient.dead = (orient.type6 or 0)
         orient.score += (orient.type1 or 0) * 100
-        orient.score += (orient.type2 or 0) * 50
+        orient.score += (orient.type2 or 0) * 80
         orient.score += (orient.type3 or 0) * 20
         orient.score += (orient.type4 or 0) * 5
         orient.score += (orient.type5 or 0)
@@ -237,8 +237,10 @@ class Step(object):
                 crude.win = True
 
         crude.score = crude.scores[0]
-        crude.surplus = crude.scores[1] // 10
+        crude.surplus = crude.scores[1] // 2
         crude.score += crude.surplus
+        if crude.win:
+            crude.score += 200
         return crude.score
 
     def score(self):
@@ -268,6 +270,8 @@ class Step(object):
         return wheres
 
     def get_next(self, turn, depth=0):
+        logger = logging.getLogger("gomoku")
+        logger.debug("Thinking turn %s depth %s", turn, depth)
         if (self.pos == 0).sum() == 0:
             return None
 
@@ -278,25 +282,39 @@ class Step(object):
 
         wheres = self.get_wheres()
         for where in wheres.keys():
-            current = Step(where=where, turn=turn, pos=copy.copy(self.pos))
-            counter = Step(where=where, turn=turn * -1, pos=copy.copy(self.pos))
-            first = current if current.score() >= counter.score() else counter
-            second = current if current != first else counter
-            step = (first, second)
+            step = Step(where=where, turn=turn, pos=copy.copy(self.pos))
+            if depth == 0:
+                step.parent = None
+            else:
+                step.parent = self
+            logger.info("Step turn %s where %s depth %s score %s", step.turn, step.where, depth, step.score())
+
+            if step.win():
+                logger.info("Step turn %s where %s depth %s win", step.turn, step.where, depth)
+                return step
             self.children.append(step)
 
-        steps = sorted(self.children, key=lambda e: [e[0].score(), e[1].score(), e[0].turn * -1, random.random()], reverse=True)[:self.max_step]
-        if depth >= self.max_depth or steps[0][0].win():
-            return steps[0][0]
+        steps = sorted(self.children, key=lambda e: [e.score(), random.random()], reverse=True)[:self.max_step]
+        if depth >= self.max_depth:
+            return steps[0]
 
+        result = None
         substeps = []
-        for step, _ in steps:
+        for step in steps:
             substep = step.get_next(turn=turn * -1, depth=depth + 1)
-            substep.parent = step
+            if substep.win():
+                result = substep
+                break
             substeps.append(substep)
 
-        step = sorted(substeps, key=lambda e: [e.score(), random.random()], reverse=True)[0]
-        return step.parent
+        if not result:
+            result = sorted(substeps, key=lambda e: [e.score(), random.random()], reverse=True)[0]
+
+        step = result
+        while True:
+            if step.parent.parent is None:
+                return step
+            step = step.parent
 
     def test(self):
         self.show()
@@ -365,18 +383,36 @@ class Gomoku(Step):
         self.turn = 1
         self.thinking = False
 
-    def dump(self):
-        self.children = []
-        filename = os.path.abspath('dump.bin')
-        dandan.value.put_pickle(self, filename)
+    def dump(self, filename=None):
+        if not filename:
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dumps/default.gomo")
+        filename = os.path.abspath(filename)
+        dirname = os.path.dirname(filename)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        data = dandan.value.AttrDict()
+        data.filetype = "gomo"
+        data.pos = self.pos
+        data.turn = self.turn
+        data.where = self.where
+        data.his = self.his
+        data.crude = self.crude
+        dandan.value.put_pickle(data, filename)
+
         self.logger.info("dump > {}".format(filename))
 
-    def load(self):
-        filename = os.path.abspath('dump.bin')
+    def load(self, filename=None):
+        if not filename:
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dumps/default.gomo")
         if not os.path.exists(filename):
-            print "file not exists"
+            self.logger.warning("file {} not exists".format(filename))
             return
         data = dandan.value.get_pickle(filename)
+        if not isinstance(data, dandan.value.AttrDict):
+            return
+        if data.filetype != "gomo":
+            return
         self.pos = data.pos
         self.turn = data.turn
         self.his = data.his
@@ -484,7 +520,7 @@ class Gomoku(Step):
 
         logger = self.logger
         logger.debug("Thinking ...")
-        step = self.get_next(self.turn * -1)
+        step = self.get_next(self.turn)
         if not step:
             # print "No more step..."
             return None

@@ -5,7 +5,10 @@ import sys
 import Tkinter as tk
 import ttk
 import tkMessageBox
+import tkFileDialog
 import dandan
+import glob
+import re
 import traceback
 from PIL import Image
 from PIL import ImageTk
@@ -47,13 +50,15 @@ class StatusBar(tk.Frame):
 
     def set_info(self, current, counter):
         string = "POS: [{:02},{:02}] CUR: {} COU: {}".format(current.where[0], current.where[1], current.score(), counter.score())
-        self.variable.set(string)
+        self.set_text(string)
 
     def reset(self):
-        self.variable.set('Status Bar')
+        self.set_text('Status Bar')
 
     def set_text(self, text):
-        self.variable.set(text)
+        turn = "BLACK" if self.master.gomoku.turn == 1 else "WHITE"
+        string = u'TURN[{}] {}'.format(turn, text)
+        self.variable.set(string)
 
 
 class GomokuUI(tk.Tk):
@@ -71,12 +76,15 @@ class GomokuUI(tk.Tk):
         conf = dandan.value.get_json(self.config_file) or {}
         conf = dandan.value.AttrDict(conf)
         if not conf:
-            conf.board_size = 777
+            conf.board_size = 800
             conf.show_statusbar = True
             conf.show_menubar = True
 
         if not conf.mode:
             conf.mode = self.MODE_AI
+
+        if not conf.debug:
+            conf.debug = False
 
         values = dandan.value.AttrDict()
         values.show_menubar = tk.BooleanVar()
@@ -108,7 +116,7 @@ class GomokuUI(tk.Tk):
     def initialize_bg(self):
         self.bg_imagepath = os.path.join(self.dirname, "skins", 'background.png')
         if not os.path.exists(self.bg_imagepath):
-            # print "Warning: background image not exists."
+            self.logger.warning("background image not exists.")
             return
 
         self.bg_image = Image.open(self.bg_imagepath).convert('RGBA')
@@ -159,6 +167,7 @@ class GomokuUI(tk.Tk):
         self.bind(sequence="<Button-2>", func=self.middle_click)
         self.bind(sequence="<Button-3>", func=self.right_click)
         self.bind(sequence="<Motion>", func=self.mouse_motion)
+        self.bind(sequence="<KeyPress>", func=self.keyboard)
         # self.bind(sequence="<Configure>", func=self.configure)
 
         self.motion = None
@@ -180,6 +189,8 @@ class GomokuUI(tk.Tk):
         context_menu.add_command(label="Back", command=self.back)
         context_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         context_menu.add_command(label="Reset", command=self.reset)
+        context_menu.add_command(label="Refresh", command=self.refresh)
+        context_menu.add_command(label="Analysis", command=self.analysis)
         context_menu.add_separator()
         context_menu.add_cascade(label="Mode", menu=mode_menu)
         context_menu.add_cascade(label="View", menu=view_menu)
@@ -189,7 +200,14 @@ class GomokuUI(tk.Tk):
         game_menu.add_command(label="Back", command=self.back)
         game_menu.add_command(label="Hint", command=lambda: (self.compute_pos(), self.compute_pos()) if self.conf.mode == self.MODE_AI else self.compute_pos())
         game_menu.add_command(label="Reset", command=self.reset)
+        game_menu.add_command(label="Refresh", command=self.refresh)
+        game_menu.add_command(label="Analysis", command=self.analysis)
+
+        game_menu.add_separator()
+        game_menu.add_command(label="Save", command=self.dump)
+        game_menu.add_command(label="Open", command=self.load)
         game_menu.add_cascade(label="Mode", menu=mode_menu)
+        game_menu.add_separator()
         game_menu.add_command(label="Exit", command=lambda: sys.exit())
 
         view_menu.add_checkbutton(
@@ -227,11 +245,24 @@ class GomokuUI(tk.Tk):
         if self.conf.show_statusbar:
             self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
+    def initialize_view(self):
+        if not self.conf.debug:
+            return
+        import gomoku_view
+        self.view = gomoku_view.View(self)
+        self.view.start()
+
     def initialize(self):
         self.gomoku = gomoku.Gomoku()
         self.logger = self.gomoku.logger
         self.filepath = os.path.abspath(__file__)
         self.dirname = os.path.dirname(self.filepath)
+
+        self.dumpspath = os.path.join(self.dirname, "dumps")
+        if not os.path.exists(self.dumpspath):
+            os.makedirs(self.dumpspath)
+
+        self.anast = None
 
         self.initialize_config()
         self.initialize_root()
@@ -240,6 +271,7 @@ class GomokuUI(tk.Tk):
         self.initialize_chess()
         self.initialize_menu()
         self.initialize_statusbar()
+        self.initialize_view()
         self.initialize_event()
 
     def configure(self, event=None):
@@ -248,8 +280,7 @@ class GomokuUI(tk.Tk):
             height += self.menubar_height
         if self.conf.show_statusbar:
             height += self.statusbar_heigit
-
-        self.logger.debug("window height %s", height)
+        # self.logger.debug("window height %s", height)
         self.geometry("{}x{}".format(self.conf.board_size, height))
 
     def reset(self):
@@ -262,7 +293,7 @@ class GomokuUI(tk.Tk):
                 if not chess:
                     continue
                 self.set_chess((x, y), 0)
-                self.logger.debug(chess)
+                # self.logger.debug(chess)
 
     def toggle_statusbar(self):
         self.logger.debug("toggle_statusbar")
@@ -304,8 +335,10 @@ class GomokuUI(tk.Tk):
             chess.image = self.black_chess
         else:
             chess.image = self.white_chess
-
-        chess.label = ttk.Label(self, image=chess.image)
+        if not chess.label:
+            chess.label = ttk.Label(self, image=chess.image)
+        else:
+            chess.label.config(image=chess.image)
         chess.label.place(x=self.board_start + x * self.board_cell, y=self.board_start + y * self.board_cell)
         self.update()
 
@@ -344,6 +377,32 @@ class GomokuUI(tk.Tk):
                 tkMessageBox.showinfo("WIN", "BLACK WIN!!!")
             return
 
+    def load(self):
+        filename = tkFileDialog.askopenfilename(
+            initialdir=self.dumpspath,
+            initialfile='default.gomo',
+            filetypes=(("Gomoku file", "*.gomo"),),
+            defaultextension=".gomo")
+        if not filename:
+            return
+        self.gomoku.load(filename)
+        self.refresh()
+
+    def dump(self):
+        filename = tkFileDialog.asksaveasfilename(
+            initialdir=self.dumpspath,
+            initialfile='default.gomo',
+            filetypes=(("Gomoku file", "*.gomo"),),
+            defaultextension=".gomo")
+        if not filename:
+            return
+        self.logger.info("Get dump filename {}".format(filename))
+        self.gomoku.dump(filename)
+
+    def refresh(self):
+        for where in [(x, y) for x in xrange(0, self.gomoku.width) for y in xrange(0, self.gomoku.height)]:
+            self.set_chess(where, self.gomoku.pos[where])
+
     def compute_pos(self):
         self.statusbar.set_text("Thinking...")
         self.bg.state(["disabled"])
@@ -367,6 +426,7 @@ class GomokuUI(tk.Tk):
         where = self.gomoku.back()
         if not where:
             tkMessageBox.showinfo("WARNING", "NO MORE STEP TO BACK!!!")
+            return
         self.set_chess(where, 0)
 
         if self.conf.mode == self.MODE_AI:
@@ -392,8 +452,7 @@ class GomokuUI(tk.Tk):
     def click(self, event):
         if "disabled" in self.bg.state():
             return
-        self.infomation()
-        self.logger.info("Click root position %s, %s", event.x_root, event.y_root)
+        # self.logger.info("Click root position %s, %s", event.x_root, event.y_root)
         where = self.get_click_pos(event)
         if not where:
             return
@@ -415,10 +474,11 @@ class GomokuUI(tk.Tk):
         self.statusbar.set_info(current, counter)
 
     def right_click(self, event):
-        self.logger.debug("Right click %s", event)
+        # self.logger.debug("Right click %s", event)
         self.context_menu.post(event.x_root, event.y_root)
 
     def mouse_motion(self, event):
+        return
         # self.logger.debug("Mouse motion %s, %s", event.x_root, event.y_root)
         if not self.conf.show_statusbar:
             return
@@ -439,12 +499,87 @@ class GomokuUI(tk.Tk):
         self.logger.debug("counter score %s", counter.score())
         self.statusbar.set_info(current, counter)
 
+    def keyboard(self, event):
+        # self.logger.debug("Key event code %s sym %s char %s", event.keycode, event.keysym, event.char)
+        if event.keycode == 90 and event.char not in ("Z", "z"):  # ctrl + z
+            self.logger.info("Control Z pressed")
+            self.back()
+        if event.keycode == 83 and event.char not in ("S", 's'):
+            self.logger.info("Control S pressed")
+            self.dump()
+
+    def analysis_file(self, filename):
+        logger = self.logger
+        basename = os.path.basename(filename).split(".")[0]
+
+        match = re.match(r"(?P<count>.+)_(?P<name>.+)_(?P<length>\d+)_(?P<type>\d+)", basename)
+        if not match:
+            return
+        self.gomoku.load(filename)
+        self.refresh()
+        score = self.gomoku.score()
+
+        logger.debug("TYPE {} SCORE {}".format(basename, score))
+
+        count = match.group("count")
+        name = match.group("name")
+        length = match.group("length")
+        type = match.group("type")
+
+        self.anast[count][length][name][type] = score
+
+    def analysis(self):
+        logger = self.logger
+        gomos = glob.glob(os.path.join(self.dumpspath, "*.gomo"))
+        gomos = sorted(gomos)
+        self.anast = dandan.value.AttrDict()
+        for filename in gomos:
+            try:
+                self.analysis_file(filename)
+            except Exception:
+                self.logger.warning(traceback.format_exc())
+
+        anast = dandan.value.AttrDict()
+
+        for count_name in self.anast:
+            table = anast[count_name]
+            count = self.anast[count_name]
+
+            for length in count:
+                if length not in table.title:
+                    table.title[length] = True
+                lengths = count[length]
+                for name in lengths:
+                    scores = lengths[name]
+                    score = "/"
+                    scores = sorted(scores.items(), key=lambda e: e[1], reverse=True)
+                    for type, value in scores:
+                        score += "{}:{}/".format(type, value)
+                    table.body[name][length] = score
+
+            for name in table.body.keys():
+                for length in table.title:
+                    if not table.body[name][length]:
+                        table.body[name][length] = "X"
+                table.body[name] = sorted(table.body[name].items(), key=lambda e: e[0])
+
+            table.title = sorted(table.title.keys())
+            logger.debug(table)
+
+        self.anast = anast
+        import webbrowser
+        webbrowser.open(url="http://localhost:55555")
+
     def infomation(self):
         logger = self.logger
-        logger.debug("menu height %s", self.menu.winfo_height())
+        gomos = glob.glob(os.path.join(self.dumpspath, "*.gomo"))
+        logger.debug(gomos)
 
 
 def main():
+    if sys.executable.endswith("pythonw.exe"):
+        sys.stdout = open(os.devnull, "w")
+        sys.stderr = open(os.devnull, "w")
     ui = GomokuUI()
     ui.mainloop()
 

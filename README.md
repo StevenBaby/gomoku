@@ -11,10 +11,14 @@ dandan
 
 pillow | for gui image display
 
+flask | for debug server
+
 history
 =======
 
-2017-10-31 0.4.1 enhance ai a little
+2017-10-31 0.5.0 and save and open file for game and enhance AI and fix bug and a web server only for debug
+
+2017-10-31 0.4.1 enhance AI a little
 
 2017-10-31 0.4.0 add about information, just put version on board
 
