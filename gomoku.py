@@ -17,7 +17,7 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.6.1"
+__VERSION__ = "0.6.2"
 colorama.init(autoreset=True)
 
 
@@ -165,7 +165,14 @@ class Step(object):
         orient.type5 = 0
         orient.type6 = 0
 
+        if len(orient.range) < 5:
+            orient.range.append(None)
+
         for where in orient.range:
+            if not where:
+                orient.type6 += 1
+                continue
+
             if pos[where] == turn and not orient.type3:
                 orient.cont.append(where)
                 orient.type1 += 1
@@ -205,24 +212,24 @@ class Step(object):
             return
 
         if length >= 5:  # S5
-            direction.score = 120000
+            direction.score = 3000
             direction.win = True
             return
 
         scores = {
             # dead 0
             0: {  # length
-                4: 50000,
-                3: 15000,
-                2: 6000,
-                1: 2000,
+                4: 1000,
+                3: 280,
+                2: 100,
+                1: 30,
             },
             # dead 1
             1: {  # length
-                4: 10000,
-                3: 4000,
-                2: 1000,
-                1: 100,
+                4: 300,
+                3: 100,
+                2: 30,
+                1: 10,
             },
         }
 
@@ -233,14 +240,14 @@ class Step(object):
         away = direction.type2
         aways = {
             0: {
-                3: 15000,
-                2: 6000,
-                1: 2000,
+                3: 300,
+                2: 100,
+                1: 10,
             },
             1: {
-                3: 4000,
-                2: 1000,
-                1: 100,
+                3: 100,
+                2: 50,
+                1: 10,
             },
         }
         if away:
@@ -340,8 +347,14 @@ class Step(object):
         wheres = self.get_wheres()
         for where in wheres.keys():
             current = Step(where=where, pos=copy.copy(self.pos), turn=turn, )
+            if current.win():
+                return current
             counter = Step(where=where, pos=copy.copy(self.pos), turn=turn * -1, )
-            pair = sorted([current, counter], key=lambda e: [e.score(), e.turn * turn], reverse=True)
+
+            first = current if current.score() >= counter.score() else counter
+            second = current if first != current else counter
+
+            pair = [first, second]
             children.append(pair)
 
         steps = sorted(children,
