@@ -16,7 +16,7 @@ flask | for debug server
 history
 =======
 
-2017-11-01 0.6.1 fix bug
+2017-11-01 0.7.0 enhance AI more intelligence
 
 2017-11-01 0.6.0 enhance AI more intelligence
 
@@ -27,8 +27,6 @@ history
 2017-10-31 0.4.1 enhance AI a little
 
 2017-10-31 0.4.0 add about information, just put version on board
-
-2017-10-31 0.3.1 fix bug.
 
 2017-10-31 0.3.0 add several function  for gui
 

@@ -1,55 +1,259 @@
 #!/usr/bin/python2
 # encoding=utf8
 
-import sys
-import re
 import os
 import dandan
 import copy
-import time
 import random
 import logging
 import logging.config
-import colorama
-import traceback
+# import traceback
 
 from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.6.2"
-colorama.init(autoreset=True)
+__VERSION__ = "0.7.0"
+
+
+class Direct(object):
+
+    TYPE_SS = "TYPE_SS"
+    TYPE_FF = "TYPE_FF"
+
+    TYPE_A4 = "TYPE_A4"
+    TYPE_A3 = "TYPE_A3"
+    TYPE_A2 = "TYPE_A2"
+    TYPE_A1 = "TYPE_A1"
+
+    TYPE_D4 = "TYPE_D4"
+    TYPE_D3 = "TYPE_D3"
+    TYPE_D2 = "TYPE_D2"
+    TYPE_D1 = "TYPE_D1"
+
+    TYPE_C5 = "TYPE_C5"
+    TYPE_C4 = "TYPE_C4"
+    TYPE_C3 = "TYPE_C3"
+    TYPE_C2 = "TYPE_C2"
+
+    TYPE_F5 = "TYPE_F5"
+    TYPE_F4 = "TYPE_F4"
+    TYPE_F3 = "TYPE_F3"
+    TYPE_F2 = "TYPE_F2"
+
+    def __init__(self, pos, where, turn, fore, back, name):
+        self.pos = pos
+        self.where = where
+        self.turn = turn
+        self.fore = fore
+        self.back = back
+        self.name = name
+
+        self.type = None
+        self.range = []
+        self.length = 0
+
+        self.remain = 0
+        self.remains = [0, 0]
+
+        self.dead = 0
+        self.point = 0
+        self.points = [0, 0]
+
+        self.win = False
+
+    def make_orient(self, wheres, orient, debug=False):
+        logger = logging.getLogger("gomoku")
+        pos = self.pos
+        turn = self.turn
+
+        if debug:
+            logger.debug(wheres)
+
+        for where in wheres:
+            if not where:
+                if debug:
+                    logger.debug('test %s border', where)
+                self.dead += 1
+                return
+
+            if pos[where] == turn and not self.points[orient]:
+                if debug:
+                    logger.debug('test %s continuous', where)
+                self.range.append(where)
+                continue
+
+            if pos[where] == turn:
+                if debug:
+                    logger.debug('test %s interrupt', where)
+                self.remains[orient] += 1
+                continue
+
+            if pos[where] == 0 and not self.points[orient]:
+                if debug:
+                    logger.debug('test %s first point', where)
+                self.point += 1
+                self.points[orient] = 1
+                continue
+
+            if pos[where] == 0:
+                if debug:
+                    logger.debug('test %s second point', where)
+                return
+
+            if pos[where] == turn * -1 and self.points[orient] and not self.remains[orient]:
+                if debug:
+                    logger.debug('test %s second finish', where)
+                return
+
+            if pos[where] == turn * -1:
+                if debug:
+                    logger.debug('test %s dead', where)
+                self.dead += 1
+                return
+
+            logger.warning('make orient %s uncatched', where)
+
+    def make_direct(self, debug):
+        # logger = logging.getLogger("gomoku")
+        self.range.append(self.where)
+        # go fore
+        self.make_orient(self.fore, 0, debug)
+        # go back
+        self.make_orient(self.back, 1, debug)
+
+        self.remain = max(self.remains)
+        self.length = len(self.range) + self.remain
+
+    def make_type(self, debug):
+        logger = logging.getLogger("gomoku")
+        length = self.length
+        dead = self.dead
+        remain = self.remain
+        point = self.point
+
+        if length >= 5 and not remain:
+            self.win = True
+            self.type = self.TYPE_SS
+            return
+
+        if length >= 5:
+            self.type = self.TYPE_C5
+            return
+
+        if length < 5 and dead == 2:
+            self.type = self.TYPE_FF
+            return
+
+        types = {
+            # length
+            4: {
+                #  remain
+                True: {
+                    # dead
+                    0: self.TYPE_C4,
+                    1: self.TYPE_F4,
+                },
+                False: {
+                    # dead
+                    0: self.TYPE_A4,
+                    1: self.TYPE_D4,
+                },
+            },
+            3: {
+                #  remain
+                True: {
+                    # dead
+                    0: self.TYPE_C3,
+                    1: self.TYPE_F3,
+                },
+                False: {
+                    # dead
+                    0: self.TYPE_A3,
+                    1: self.TYPE_D3,
+                },
+            },
+            2: {
+                #  remain
+                True: {
+                    # dead
+                    0: self.TYPE_C2,
+                    1: self.TYPE_F2,
+                },
+                False: {
+                    # dead
+                    0: self.TYPE_A2,
+                    1: self.TYPE_D2,
+                },
+            },
+            1: {
+                #  remain
+                True: {
+                    # dead
+                    0: None,
+                    1: None,
+                },
+                False: {
+                    # dead
+                    0: self.TYPE_A1,
+                    1: self.TYPE_D1,
+                },
+            },
+        }
+        # logger.debug(types)
+        try:
+            self.type = types[length][remain > 0][dead]
+        except Exception:
+            logger.warning("make type uncatched length %s remain %s dead %s point %s", length, remain, dead, point)
+
+    def score(self):
+        scores = {
+            self.TYPE_SS: 50000,
+            self.TYPE_FF: 0,
+
+            self.TYPE_A4: 10000,
+            self.TYPE_A3: 4000,
+            self.TYPE_A2: 1500,
+            self.TYPE_A1: 500,
+
+            self.TYPE_C5: 6000,
+            self.TYPE_C4: 4500,
+            self.TYPE_C3: 3500,
+            self.TYPE_C2: 1200,
+
+            self.TYPE_D4: 5000,
+            self.TYPE_D3: 2000,
+            self.TYPE_D2: 800,
+            self.TYPE_D1: 100,
+
+            self.TYPE_F5: 4500,
+            self.TYPE_F4: 3500,
+            self.TYPE_F3: 1500,
+            self.TYPE_F2: 200,
+
+            None: 0,
+        }
+        res = scores[self.type]
+        if self.name in ("vh", "hv"):
+            res += 10
+        return res
+
+    def make(self, debug=False):
+        self.make_direct(debug)
+        self.make_type(debug)
 
 
 class Step(object):
 
-    def init_settings(self):
-        self.max_depth = 0
-        self.max_step = 8
-        self.percent = 1000
+    max_depth = 0
+    max_step = 8
 
-    def init_const(self):
-        self.width = 19
-        self.height = 19
-        self.white = u"○"
-        self.black = u"●"
-
-        self.board_color = colorama.Fore.MAGENTA + colorama.Back.YELLOW
-        self.chess_color = colorama.Fore.BLACK + colorama.Back.YELLOW
-
-        self.win_color = colorama.Fore.RED + colorama.Back.YELLOW
-        self.where_color = colorama.Fore.BLACK + colorama.Back.WHITE
-        self.index_color = [
-            colorama.Fore.BLACK + colorama.Back.MAGENTA,
-            colorama.Fore.WHITE + colorama.Back.CYAN,
-        ]
-
-        self.wrange = range(0, self.width)
-        self.hrange = range(0, self.height)
+    width = 19
+    height = 19
+    wrange = dict([(var, True) for var in xrange(0, width)])
+    hrange = dict([(var, True) for var in xrange(0, height)])
 
     def __init__(self, pos=None, where=None, turn=0,):
-        self.init_const()
-        self.init_settings()
         self.reset()
 
         if pos is not None:
@@ -64,264 +268,92 @@ class Step(object):
     def reset(self):
         self.pos = mat(zeros((self.width, self.height,)), dtype=int)
         self.children = []
+        self.directs = []
         self.turn = 0
         self.where = None
         self.parent = None
-        self.crude = None
+        self._score = 0
+        self._win = False
 
-    def show(self, clear=True):
-        pos = self.pos
-        if clear:
-            dandan.system.clear()
-        sys.stdout.write("  ")
-        for x in xrange(-1, self.width):
-            if x != -1:
-                sys.stdout.write(self.index_color[x % 2] + "{:02}".format(x))
-            for y in xrange(0, self.height):
-                if x == -1:
-                    sys.stdout.write(self.index_color[y % 2] + "{:02}".format(y))
-                    continue
-                chess = pos[x, y]
-                if self.crude and self.crude.win and (x, y) in self.crude.range:
-                    sys.stdout.write(self.win_color + (self.black if chess == 1 else self.white))
-                    continue
-                if chess != 0 and self.where == (x, y):
-                    sys.stdout.write(self.where_color + (self.black if chess == 1 else self.white))
-                    continue
-                if chess != 0:
-                    sys.stdout.write(self.chess_color + (self.black if chess == 1 else self.white))
-                    continue
-                if (x, y) == (0, 0):  # top left corner
-                    sys.stdout.write(self.board_color + u"┌")
-                    continue
-                if (x, y) == (self.width - 1, 0):  # top right corner
-                    sys.stdout.write(self.board_color + u"└")
-                    continue
-                if (x, y) == (0, self.height - 1):  # bottom left corner:
-                    sys.stdout.write(self.board_color + u"┐")
-                    continue
-                if (x, y) == (self.width - 1, self.height - 1):  # bottom right corner:
-                    sys.stdout.write(self.board_color + u"┘")
-                    continue
-                if x == 0:
-                    sys.stdout.write(self.board_color + u"┬")
-                    continue
-                if x == self.width - 1:
-                    sys.stdout.write(self.board_color + u"┴")
-                    continue
-                if y == 0:
-                    sys.stdout.write(self.board_color + u"├")
-                    continue
-                if y == self.height - 1:
-                    sys.stdout.write(self.board_color + u"┤")
-                    continue
-                sys.stdout.write(self.board_color + u"┼")
-            print
-
-    def reset_crude(self):
-        crude = dandan.value.AttrDict()
+    def get_ranges(self):
+        # logger = logging.getLogger("gomoku")
+        ranges = dandan.value.AttrDict()
         x, y = self.where
-        crude.direction.hh.orient.fore.range = [
-            (x, y - var) for var in xrange(1, 6) if (y - var) in self.hrange
+        orange = xrange(1, 6)
+
+        ranges.hh.fore = [
+            (x, y - var) for var in orange if (y - var) in self.hrange
         ]  # left
-        crude.direction.hh.orient.back.range = [
-            (x, y + var) for var in xrange(1, 6) if (y + var) in self.hrange
+
+        ranges.hh.back = [
+            (x, y + var) for var in orange if (y + var) in self.hrange
         ]  # right
 
-        crude.direction.vv.orient.fore.range = [
-            (x - var, y) for var in xrange(1, 6) if (x - var) in self.wrange
+        ranges.vv.fore = [
+            (x - var, y) for var in orange if (x - var) in self.wrange
         ]  # top
-        crude.direction.vv.orient.back.range = [
-            (x + var, y) for var in xrange(1, 6) if (x + var) in self.wrange
+        ranges.vv.back = [
+            (x + var, y) for var in orange if (x + var) in self.wrange
         ]  # down
 
-        crude.direction.hv.orient.fore.range = [
-            (x - var, y + var) for var in xrange(1, 6) if (x - var) in self.wrange and (y + var) in self.hrange
+        ranges.hv.fore = [
+            (x - var, y + var) for var in orange if (x - var) in self.wrange and (y + var) in self.hrange
         ]  # top right
-        crude.direction.hv.orient.back.range = [
-            (x + var, y - var) for var in xrange(1, 6) if (x + var) in self.wrange and (y - var) in self.hrange
+
+        ranges.hv.back = [
+            (x + var, y - var) for var in orange if (x + var) in self.wrange and (y - var) in self.hrange
         ]  # down left
 
-        crude.direction.vh.orient.fore.range = [
-            (x - var, y - var) for var in xrange(1, 6) if (x - var) in self.wrange and (y - var) in self.hrange
+        ranges.vh.fore = [
+            (x - var, y - var) for var in orange if (x - var) in self.wrange and (y - var) in self.hrange
         ]  # top left
 
-        crude.direction.vh.orient.back.range = [
-            (x + var, y + var) for var in xrange(1, 6) if (x + var) in self.wrange and (y + var) in self.hrange
+        ranges.vh.back = [
+            (x + var, y + var) for var in orange if (x + var) in self.wrange and (y + var) in self.hrange
         ]  # down right
-        self.crude = crude
 
-    def make_orient(self, orient):
+        for direct in ranges:
+            for orient in ranges[direct]:
+                # if len(ranges[direct][orient]) < len(orange):
+                ranges[direct][orient].append(None)
+        return ranges
+
+    def make_directs(self, debug=False):
         # logger = logging.getLogger("gomoku")
-        pos = self.pos
-        turn = self.turn
-        orient.score = 0
-        orient.cont = []
-
-        orient.type1 = 0
-        orient.type2 = 0
-        orient.type3 = 0
-        orient.type4 = 0
-        orient.type5 = 0
-        orient.type6 = 0
-
-        if len(orient.range) < 5:
-            orient.range.append(None)
-
-        for where in orient.range:
-            if not where:
-                orient.type6 += 1
-                continue
-
-            if pos[where] == turn and not orient.type3:
-                orient.cont.append(where)
-                orient.type1 += 1
-                continue
-
-            elif pos[where] == turn:
-                orient.type2 += 1
-                continue
-
-            elif pos[where] == 0 and not orient.type3:
-                orient.type3 += 1
-                continue
-
-            elif pos[where] == 0:
-                orient.type4 += 1
-                continue
-
-            elif pos[where] == turn * -1 and orient.type3:
-                orient.type5 += 1
-                break
-
-            elif pos[where] == turn * -1:
-                orient.type6 += 1
-                break
-
-    def score_direction(self, direction):
-        logger = logging.getLogger("gomoku")
-        del direction["orient"]
-        direction.win = False
-
-        length = len(direction.range)
-        dead = direction.type6
-
-        # logger.debug("length %s dead %s", length, dead)
-        if dead >= 2 and length < 5:
-            direction.score = 0
-            return
-
-        if length >= 5:  # S5
-            direction.score = 3000
-            direction.win = True
-            return
-
-        scores = {
-            # dead 0
-            0: {  # length
-                4: 1000,
-                3: 280,
-                2: 100,
-                1: 30,
-            },
-            # dead 1
-            1: {  # length
-                4: 300,
-                3: 100,
-                2: 30,
-                1: 10,
-            },
-        }
-
-        direction.score = scores[dead][length]
-        if length == 4:
-            return
-
-        away = direction.type2
-        aways = {
-            0: {
-                3: 300,
-                2: 100,
-                1: 10,
-            },
-            1: {
-                3: 100,
-                2: 50,
-                1: 10,
-            },
-        }
-        if away:
-            direction.score += aways[dead][length]
-
-    def make_direction(self, direction):
-        direction.score = 0
-        direction.win = False
-        direction.range = [self.where]
-
-        direction.type1 = 0
-        direction.type2 = 0
-        direction.type3 = 0
-        direction.type4 = 0
-        direction.type5 = 0
-        direction.type6 = 0
-
-        for name in direction.orient:
-            orient = direction.orient[name]
-            orient.name = name
-            orient.direction = direction.name
-            self.make_orient(orient)
-
-            direction.range.extend(orient.cont)
-
-            direction.type1 += orient.type1
-            direction.type2 += orient.type2
-            direction.type3 += orient.type3
-            direction.type4 += orient.type4
-            direction.type5 += orient.type5
-            direction.type6 += orient.type6
-
-    def make_crude(self,):
-        logger = logging.getLogger("gomoku")
-        self.reset_crude()
-        crude = self.crude
-
-        crude.score = 0
-        crude.surplus = 0
-        crude.win = False
-        crude.scores = []
-        crude.directions = []
-
-        for name in crude.direction:
-            direction = crude.direction[name]
-            direction.name = name
-            self.make_direction(direction)
-            self.score_direction(direction)
-            # logger.debug(direction)
-            if direction.win:
-                crude.win = True
-            crude.directions.append(direction)
-            crude.directions = sorted(crude.directions, key=lambda e: e.score, reverse=True)
-            crude.scores = [var.score for var in crude.directions][:2]
-
-        if crude.win:
-            crude.score = crude.scores[0]
+        ranges = self.get_ranges()
+        directs = []
+        for direct_name in ranges:
+            direct = Direct(
+                pos=self.pos,
+                where=self.where,
+                turn=self.turn,
+                fore=ranges[direct_name].fore,
+                back=ranges[direct_name].back,
+                name=direct_name,
+            )
+            direct.make(debug)
+            directs.append(direct)
+        directs = sorted(directs, reverse=True, key=lambda e: e.score())
+        if directs[0].type == Direct.TYPE_A4:
+            self._score = directs[0].score()
         else:
-            crude.score = sum(crude.scores)
-        return crude.score
+            self._score = sum([var.score() for var in directs[:2]])
+        self._win = directs[0].win
+        self.directs = directs
 
     def score(self):
         if not self.where:
-            return 0
-        if not self.crude:
-            self.make_crude()
-        return self.crude.score
+            return self.score
+        if not self.directs:
+            self.make_directs()
+        return self._score
 
     def win(self):
         if not self.where:
             return False
-        if not self.crude:
-            self.make_crude()
-        return self.crude.win
+        if not self.directs:
+            self.make_directs()
+        return self._win
 
     def get_wheres(self):
         whole = [(xx, yy) for xx in xrange(0, self.width) for yy in xrange(0, self.height) if self.pos[(xx, yy)] != 0]
@@ -464,8 +496,7 @@ class Gomoku(Step):
         if len(self.his) < 1:
             self.logger.warning("No more step to back")
             return None
-
-        self.reset_crude()
+        self.directs = []
         where = self.his[-1]
         self.pos[where] = 0
         self.his.pop()
@@ -488,68 +519,8 @@ class Gomoku(Step):
         self.where = where
         self.his.append(self.where)
         self.pos[self.where] = self.turn
-        self.make_crude()
+        self.make_directs()
         self.turn *= -1
-
-    def input_pos(self,):
-        while True:
-            try:
-                sys.stdout.write(u"POS:")
-                cmd = raw_input().strip()
-                if not cmd:
-                    return self.compute_pos()
-
-                if cmd == "dump":
-                    self.dump()
-                    continue
-
-                if cmd == 'load':
-                    self.load()
-                    continue
-
-                if cmd == "back":
-                    self.back()
-                    continue
-
-                if cmd == "show":
-                    self.show()
-                    continue
-
-                cmds = cmd.split(" ")
-                if len(cmds) >= 2:
-                    where = (int(cmds[0]), int(cmds[1]))
-                if len(cmds) > 2:
-                    cmd = cmds[2].strip()
-                    if cmd == "info":
-                        self.info(where)
-                        continue
-                    if cmd == "test":
-                        self.test(where)
-                        continue
-                    if cmd == "set":
-                        if self.pos[where] != 0:
-                            print "Warning: position already occupied."
-                            continue
-                        self.pos[where] = self.turn
-                        self.his.append(where)
-                        self.turn *= -1
-                        self.show()
-                        continue
-
-                if self.pos[where] != 0:
-                    print "Warning: position already occupied."
-                    continue
-                break
-            except KeyboardInterrupt:
-                exit()
-            except Exception as e:
-                e
-                traceback.print_exc()
-                continue
-        if self.win():
-            return None
-
-        return where
 
     def compute_pos(self):
         if self.win():
@@ -567,39 +538,18 @@ class Gomoku(Step):
             raw_input()
         return step.where
 
-    def get_pos(self,):
-        if self.turn == 1:
-            return self.input_pos()
-        else:
-            return self.compute_pos()
+    def test(self, where):
+        logger = self.logger
 
-    def play(self, ):
-        while True:
-            self.show()
-            where = self.get_pos()
-            if not where:
-                raw_input()
-                continue
+        for x in xrange(0, 2):
+            logger.debug('==================== %s start =============================', x)
+            step = Step(where=where, turn=self.turn, pos=copy.copy(self.pos))
+            step.make_directs()
+            directs = step.directs
 
-            self.where = where
-            self.his.append(self.where)
-            self.pos[self.where] = self.turn
-            self.make_crude()
-            self.show()
-            if self.win():
-                self.show()
-                if self.turn == 1:
-                    print "YOU WIN"
-                else:
-                    print "YOU LOSE"
-
+            logger.debug("point %s", [(var.name, var.point) for var in directs])
+            logger.debug("dead %s", [(var.name, var.dead) for var in directs])
+            logger.debug("remain %s", [(var.name, var.remain) for var in directs])
+            logger.debug("type %s", [(var.name, var.type) for var in directs])
+            logger.debug("score %s", [(var.name, var.score()) for var in directs])
             self.turn *= -1
-
-
-# def main():
-#     gomoku = Gomoku()
-#     gomoku.play()
-
-
-# if __name__ == '__main__':
-#     main()

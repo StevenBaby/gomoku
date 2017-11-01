@@ -2,14 +2,17 @@
 # encoding=utf8
 import os
 import sys
+import dandan
+import glob
+import re
+import copy
+import traceback
+
+# for gui use
 import Tkinter as tk
 import ttk
 import tkMessageBox
 import tkFileDialog
-import dandan
-import glob
-import re
-import traceback
 from PIL import Image
 from PIL import ImageTk
 
@@ -469,17 +472,23 @@ class GomokuUI(tk.Tk):
         except Exception:
             self.logger.fatal(traceback.format_exc())
 
-    def middle_click(self, event):
+    def set_pos_info(self, where):
         if not self.conf.show_statusbar:
             return
-        where = self.get_click_pos(event)
         if not where:
             return
-        self.logger.debug("Middle click %s", where)
         current, counter = self.gomoku.info(where)
         self.logger.debug("current score %s", current.score())
         self.logger.debug("counter score %s", counter.score())
         self.statusbar.set_info(current, counter)
+
+    def middle_click(self, event):
+        where = self.get_click_pos(event)
+        if not where:
+            return
+        self.logger.debug("Middle click %s", where)
+        self.set_pos_info(where)
+        self.gomoku.test(where)
 
     def right_click(self, event):
         # self.logger.debug("Right click %s", event)
@@ -533,7 +542,7 @@ class GomokuUI(tk.Tk):
         self.refresh()
 
         self.gomoku.turn *= -1
-        self.gomoku.make_crude()
+        self.gomoku.make_directs()
         self.gomoku.turn *= -1
         score = self.gomoku.score()
 
