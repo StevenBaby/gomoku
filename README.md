@@ -16,6 +16,8 @@ flask | for debug server
 history
 =======
 
+2017-11-07 0.8.0 move version mark to __init__.py and add strategy.py but it do nothing currently just for further use.
+
 2017-11-01 0.7.0 enhance AI more intelligence
 
 2017-11-01 0.6.0 enhance AI more intelligence

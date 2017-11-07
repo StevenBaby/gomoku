@@ -13,9 +13,6 @@ from numpy import mat
 from numpy import zeros
 
 
-__VERSION__ = "0.7.0"
-
-
 class Direct(object):
 
     TYPE_SS = "TYPE_SS"
