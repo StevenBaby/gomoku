@@ -39,7 +39,7 @@
         <height>600</height>
        </size>
       </property>
-      <widget class="QLabel" name="label">
+      <widget class="Board" name="label">
        <property name="geometry">
         <rect>
          <x>0</x>
@@ -71,25 +71,6 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_2">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>130</y>
-         <width>100</width>
-         <height>100</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>black.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
        </property>
       </widget>
      </widget>
@@ -126,6 +107,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Board</class>
+   <extends>QLabel</extends>
+   <header>ui.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
