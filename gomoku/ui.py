@@ -1,6 +1,7 @@
 # coding=utf-8
 import os
 
+import numpy as np
 from numpy import mat
 from numpy import zeros
 
@@ -12,6 +13,7 @@ from PySide2.QtCore import QFile
 from PySide2.QtGui import QIcon
 from PySide2.QtGui import QPixmap
 from PySide2.QtCore import QRect
+from PySide2.QtCore import QRectF
 from PySide2.QtWidgets import QSizePolicy
 from PySide2.QtCore import Qt
 from PySide2.QtCore import QObject
@@ -44,9 +46,7 @@ class Board(QLabel):
         super().__init__(parent=parent)
         self.parent = parent
         self.labels = mat(zeros((gomoku.WIDTH, gomoku.HEIGHT,)), dtype=QLabel)
-        self.edge_x = 15
-        self.edge_y = 15
-        self.cell_size = 31
+        self.size = 600
 
     def mousePressEvent(self, event):
         logger.debug("board clicked %s - %s - %s - %s",
@@ -56,18 +56,15 @@ class Board(QLabel):
         where = self.getPosition(event)
         logger.debug('get position %s', where)
         if where:
-            self.setChess(where, gomoku.BLACK)
+            self.setChess(where, gomoku.WHITE)
 
     def getPosition(self, event):
-        pos_x = event.x()
-        pos_y = event.y()
-
-        x = (pos_x - self.edge_x) // self.cell_size
-        y = (pos_y - self.edge_y) // self.cell_size
+        x = int((event.x() - self.getEdge()) / self.getCellSize())
+        y = int((event.y() - self.getEdge()) / self.getCellSize())
 
         if x < 0 or y < 0:
             return None
-        if x > gomoku.WIDTH or y > gomoku.HEIGHT:
+        if x >= gomoku.WIDTH or y >= gomoku.HEIGHT:
             return None
 
         where = (x, y)
@@ -85,17 +82,10 @@ class Board(QLabel):
         else:
             image = QPixmap(WHITE_IMAGE)
 
-        rect = QRect(
-            (where[0] * self.cell_size) + (self.cell_size),
-            (where[1] * self.cell_size) + (self.cell_size),
-            self.cell_size,
-            self.cell_size)
         label.setPixmap(image)
         label.setScaledContents(True)
-        label.setGeometry(rect)
+        label.setGeometry(self.getChessGeometry(where))
         label.setVisible(True)
-
-        logger.debug(rect)
 
     def resizeBoard(self):
         geometry = self.parent.frameGeometry()
@@ -104,10 +94,29 @@ class Board(QLabel):
         x = (geometry.width() - size) // 2
         y = (geometry.height() - size) // 2
         self.setGeometry(QRect(x, y, size, size))
+        self.size = size
 
-        self.cell_size = int(size / gomoku.WIDTH)
-        self.edge_x = self.cell_size // 4
-        self.edge_y = self.cell_size // 4
+        for x in range(gomoku.WIDTH):
+            for y in range(gomoku.HEIGHT):
+                where = (x, y)
+                label = self.labels[where]
+                if not isinstance(label, QLabel):
+                    continue
+                label.setGeometry(self.getChessGeometry(where))
+
+    def getCellSize(self):
+        return self.size / (gomoku.WIDTH + 1)
+
+    def getEdge(self):
+        return self.getCellSize() / 2
+
+    def getChessGeometry(self, where):
+        return QRect(
+            int((where[0] * self.getCellSize()) + (self.getEdge())),
+            int((where[1] * self.getCellSize()) + (self.getEdge())),
+            int(self.getCellSize()),
+            int(self.getCellSize())
+        )
 
     def resizeEvent(self, event):
         self.resizeBoard()
