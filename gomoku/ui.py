@@ -50,15 +50,18 @@ class Board(QLabel):
         self.gomoku = gomoku.Gomoku()
 
     def mousePressEvent(self, event):
-        where = self.getPosition(event)
-        logger.debug('get position %s', where)
-        if not where:
+        pos = self.getPosition(event)
+        logger.debug('get position %s', pos)
+        if not pos:
             return
+
+        where = (pos[1], pos[0])
         if self.gomoku.has_chess(where):
             return
 
-        self.setChess(where, self.gomoku.turn)
-        self.gomoku.move(where)
+        turn = self.gomoku.turn
+        if self.gomoku.move(where):
+            self.setChess(pos, turn)
 
     def getPosition(self, event):
         x = int((event.x() - self.getEdge()) / self.getCellSize())
@@ -69,18 +72,18 @@ class Board(QLabel):
         if x >= gomoku.WIDTH or y >= gomoku.HEIGHT:
             return None
 
-        where = (x, y)
-        return where
+        pos = (x, y)
+        return pos
 
-    def hasChess(self, where):
-        return isinstance(self.labels[where], QLabel)
+    def hasChess(self, pos):
+        return isinstance(self.labels[pos], QLabel)
 
-    def setChess(self, where, chess):
-        label = self.labels[where]
+    def setChess(self, pos, chess):
+        label = self.labels[pos]
         if not label:
             logger.debug('init label for chess')
             label = QLabel(self)
-            self.labels[where] = label
+            self.labels[pos] = label
 
         if chess == gomoku.BLACK:
             image = QPixmap(BLACK_IMAGE)
@@ -90,7 +93,7 @@ class Board(QLabel):
         # label.setStyleSheet(u"background-color: rgb(0, 170, 127);")
         label.setPixmap(image)
         label.setScaledContents(True)
-        label.setGeometry(self.getChessGeometry(where))
+        label.setGeometry(self.getChessGeometry(pos))
         label.setVisible(True)
 
     def resizeBoard(self):
@@ -104,11 +107,11 @@ class Board(QLabel):
 
         for x in range(gomoku.WIDTH):
             for y in range(gomoku.HEIGHT):
-                where = (x, y)
-                if not self.hasChess(where):
+                pos = (x, y)
+                if not self.hasChess(pos):
                     continue
-                label = self.labels[where]
-                label.setGeometry(self.getChessGeometry(where))
+                label = self.labels[pos]
+                label.setGeometry(self.getChessGeometry(pos))
 
     def getCellSize(self):
         return self.size / (gomoku.WIDTH + 1)
@@ -116,10 +119,10 @@ class Board(QLabel):
     def getEdge(self):
         return self.getCellSize() / 2
 
-    def getChessGeometry(self, where):
+    def getChessGeometry(self, pos):
         return QRect(
-            int((where[0] * self.getCellSize()) + (self.getEdge())),
-            int((where[1] * self.getCellSize()) + (self.getEdge())),
+            int((pos[0] * self.getCellSize()) + (self.getEdge())),
+            int((pos[1] * self.getCellSize()) + (self.getEdge())),
             int(self.getCellSize()),
             int(self.getCellSize())
         )
@@ -132,19 +135,19 @@ class Board(QLabel):
 
         for x in range(gomoku.WIDTH):
             for y in range(gomoku.HEIGHT):
-                where = (x, y)
-                if not self.hasChess(where):
+                pos = (x, y)
+                if not self.hasChess(pos):
                     continue
-                label = self.labels[where]
+                label = self.labels[pos]
                 label.setVisible(False)
 
     def undo(self):
         node = self.gomoku.undo()
         if not node:
             return
-        if not self.hasChess(node.where):
+        if not self.hasChess(node.pos):
             return
-        label = self.labels[node.where]
+        label = self.labels[node.pos]
         label.setVisible(False)
 
 
