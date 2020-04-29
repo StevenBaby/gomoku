@@ -53,6 +53,11 @@ class Ui_MainWindow(object):
         self.label.setPixmap(QPixmap(u"board.png"))
         self.label.setScaledContents(True)
         self.label.setAlignment(Qt.AlignCenter)
+        self.label_2 = QLabel(self.container)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setGeometry(QRect(300, 230, 100, 100))
+        self.label_2.setPixmap(QPixmap(u"white.png"))
+        self.label_2.setScaledContents(True)
 
         self.window_layout.addWidget(self.container)
 
@@ -89,5 +94,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Gomoku", None))
         self.label.setText("")
+        self.label_2.setText("")
     # retranslateUi
 

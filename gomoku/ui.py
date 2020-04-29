@@ -44,29 +44,70 @@ class Board(QLabel):
         super().__init__(parent=parent)
         self.parent = parent
         self.labels = mat(zeros((gomoku.WIDTH, gomoku.HEIGHT,)), dtype=QLabel)
+        self.edge_x = 15
+        self.edge_y = 15
+        self.cell_size = 31
 
     def mousePressEvent(self, event):
-        logger.debug("board clicked")
+        logger.debug("board clicked %s - %s - %s - %s",
+                     event.x(), event.y(),
+                     self.x(), self.y(),
+                     )
+        where = self.getPosition(event)
+        logger.debug('get position %s', where)
+        if where:
+            self.setChess(where, gomoku.BLACK)
 
-        x = event.x()
-        y = event.y()
+    def getPosition(self, event):
+        pos_x = event.x()
+        pos_y = event.y()
 
-        
+        x = (pos_x - self.edge_x) // self.cell_size
+        y = (pos_y - self.edge_y) // self.cell_size
 
-    def makeChess(self):
-        chess = QLabel(self.parent)
-        self.label_2.setGeometry(QRect(220, 130, 100, 100))
-        self.label_2.setPixmap(QPixmap(u"black.png"))
-        self.label_2.setScaledContents(True)
+        if x < 0 or y < 0:
+            return None
+        if x > gomoku.WIDTH or y > gomoku.HEIGHT:
+            return None
+
+        where = (x, y)
+        return where
+
+    def setChess(self, where, chess):
+        label = self.labels[where]
+        if not label:
+            logger.debug('init label for chess')
+            label = QLabel(self)
+            self.labels[where] = label
+
+        if chess == gomoku.BLACK:
+            image = QPixmap(BLACK_IMAGE)
+        else:
+            image = QPixmap(WHITE_IMAGE)
+
+        rect = QRect(
+            (where[0] * self.cell_size) + (self.cell_size),
+            (where[1] * self.cell_size) + (self.cell_size),
+            self.cell_size,
+            self.cell_size)
+        label.setPixmap(image)
+        label.setScaledContents(True)
+        label.setGeometry(rect)
+        label.setVisible(True)
+
+        logger.debug(rect)
 
     def resizeBoard(self):
         geometry = self.parent.frameGeometry()
         size = min(geometry.width(), geometry.height())
 
-        x = int((geometry.width() - size) / 2)
-        y = int((geometry.height() - size) / 2)
-
+        x = (geometry.width() - size) // 2
+        y = (geometry.height() - size) // 2
         self.setGeometry(QRect(x, y, size, size))
+
+        self.cell_size = int(size / gomoku.WIDTH)
+        self.edge_x = self.cell_size // 4
+        self.edge_y = self.cell_size // 4
 
     def resizeEvent(self, event):
         self.resizeBoard()
