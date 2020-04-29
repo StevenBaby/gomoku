@@ -1,0 +1,3 @@
+
+WIDTH = 19
+HEIGHT = 19
