@@ -23,6 +23,8 @@ from PySide2.QtWidgets import QFileDialog
 from PySide2.QtWidgets import QMessageBox
 
 import gomoku
+import models
+import functions
 import tone
 
 
@@ -48,7 +50,7 @@ class Board(QLabel):
     def __init__(self, parent):
         super().__init__(parent=parent)
         self.parent = parent
-        self.labels = mat(zeros((gomoku.BOARD_WIDTH, gomoku.BOARD_HEIGHT,)), dtype=QLabel)
+        self.labels = mat(zeros((models.BOARD_WIDTH, models.BOARD_HEIGHT,)), dtype=QLabel)
         self.size = 600
         self.gomoku = gomoku.Gomoku()
         self.refresh()
@@ -61,11 +63,11 @@ class Board(QLabel):
 
         where = (pos[1], pos[0])
         state = self.gomoku.move(where)
-        if state == gomoku.MOVE_STATE_NONE:
+        if state == models.MOVE_STATE_NONE:
             self.refresh()
-        elif state == gomoku.MOVE_STATE_FULL:
+        elif state == models.MOVE_STATE_FULL:
             pass
-        elif state == gomoku.MOVE_STATE_WIN:
+        elif state == models.MOVE_STATE_WIN:
             self.refresh()
             QMessageBox.information(self.parent, 'Information', "Victory!!!")
 
@@ -73,12 +75,9 @@ class Board(QLabel):
         x = int((event.x() - self.getEdge()) / self.getCellSize())
         y = int((event.y() - self.getEdge()) / self.getCellSize())
 
-        if x < 0 or y < 0:
-            return None
-        if x >= gomoku.BOARD_WIDTH or y >= gomoku.BOARD_HEIGHT:
-            return None
-
         pos = (x, y)
+        if not functions.is_valid_where(pos):
+            return None
         return pos
 
     def hasChess(self, pos):
@@ -90,9 +89,9 @@ class Board(QLabel):
             label = QLabel(self)
             self.labels[pos] = label
 
-        if chess == gomoku.CHESS_BLACK:
+        if chess == models.CHESS_BLACK:
             image = QPixmap(BLACK_IMAGE)
-        elif chess == gomoku.CHESS_WHITE:
+        elif chess == models.CHESS_WHITE:
             image = QPixmap(WHITE_IMAGE)
         else:
             label.setVisible(False)
@@ -105,11 +104,11 @@ class Board(QLabel):
         label.setVisible(True)
 
     def getCellSize(self):
-        return self.size / (gomoku.BOARD_WIDTH + 1)
+        return self.size / (models.BOARD_WIDTH + 1)
 
     def refresh(self):
-        chess = self.gomoku.turn
-        if chess == gomoku.CHESS_BLACK:
+        chess = self.gomoku.head.turn
+        if chess == models.CHESS_WHITE:
             text = '''<html>
                     <body>
                         <p align="center">
@@ -119,7 +118,7 @@ class Board(QLabel):
                         </p>
                     </body>
                     </html>'''
-        elif chess == gomoku.CHESS_WHITE:
+        elif chess == models.CHESS_BLACK:
             text = '''<html>
                     <body>
                         <p align="center">
@@ -132,11 +131,11 @@ class Board(QLabel):
         if hasattr(self, 'main'):
             self.main.ui.chess.setText(text)
 
-        for x in range(gomoku.BOARD_WIDTH):
-            for y in range(gomoku.BOARD_HEIGHT):
+        for x in range(models.BOARD_WIDTH):
+            for y in range(models.BOARD_HEIGHT):
                 where = (x, y)
                 pos = (y, x)
-                self.setChess(pos, self.gomoku.board[where])
+                self.setChess(pos, self.gomoku.head.board[where])
 
     def getEdge(self):
         return self.getCellSize() / 2
@@ -158,8 +157,8 @@ class Board(QLabel):
         self.setGeometry(QRect(x, y, size, size))
         self.size = size
 
-        for x in range(gomoku.BOARD_WIDTH):
-            for y in range(gomoku.BOARD_HEIGHT):
+        for x in range(models.BOARD_WIDTH):
+            for y in range(models.BOARD_HEIGHT):
                 pos = (x, y)
                 if not self.hasChess(pos):
                     continue
