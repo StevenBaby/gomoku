@@ -50,14 +50,10 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
         self.label.setSizePolicy(sizePolicy)
         self.label.setMinimumSize(QSize(600, 0))
+        self.label.setStyleSheet(u"background-color: rgb(170, 170, 127);")
         self.label.setPixmap(QPixmap(u"board.png"))
         self.label.setScaledContents(True)
         self.label.setAlignment(Qt.AlignCenter)
-        self.label_2 = QLabel(self.container)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(300, 230, 100, 100))
-        self.label_2.setPixmap(QPixmap(u"white.png"))
-        self.label_2.setScaledContents(True)
 
         self.window_layout.addWidget(self.container)
 
@@ -81,6 +77,20 @@ class Ui_MainWindow(object):
         sizePolicy2.setHeightForWidth(self.controller.sizePolicy().hasHeightForWidth())
         self.controller.setSizePolicy(sizePolicy2)
         self.controller.setMinimumSize(QSize(300, 0))
+        self.gridLayout = QGridLayout(self.controller)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.reset = QPushButton(self.controller)
+        self.reset.setObjectName(u"reset")
+        self.reset.setMinimumSize(QSize(0, 45))
+
+        self.gridLayout.addWidget(self.reset, 0, 0, 1, 1)
+
+        self.undo = QPushButton(self.controller)
+        self.undo.setObjectName(u"undo")
+        self.undo.setMinimumSize(QSize(0, 45))
+
+        self.gridLayout.addWidget(self.undo, 1, 0, 1, 1)
+
 
         self.window_layout.addWidget(self.controller)
 
@@ -94,6 +104,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Gomoku", None))
         self.label.setText("")
-        self.label_2.setText("")
+        self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
+        self.undo.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
     # retranslateUi
 
