@@ -17,7 +17,7 @@ BLACK = 1
 WHITE = -1
 
 
-class Node(object):
+class Node(tone.utils.attrdict.attrdict):
 
     def __init__(
             self,
@@ -41,7 +41,7 @@ class Node(object):
         self.score.summary()
 
 
-class Score(object):
+class Score(tone.utils.attrdict.attrdict):
 
     params = [
         (-1, -1, 'upperleft'),
@@ -142,6 +142,7 @@ class Gomoku(object):
         if self.finished:
             return False
 
+        self.stack.append(where)
         self.board[where] = self.turn
         self.turn *= -1
 
@@ -163,6 +164,7 @@ class Gomoku(object):
         self.root = Node()
         self.current = self.root
         self.finished = False
+        self.stack = []
 
     def undo(self):
         if self.current == self.root:
@@ -171,7 +173,20 @@ class Gomoku(object):
         self.current = self.current.parent
         self.board[node.where] = EMPTY
         self.finished = False
+        self.stack.pop()
+
         return node
+
+    def save(self, filename):
+        import pickle
+        with open(filename, 'wb') as file:
+            pickle.dump(self.stack, file)
+
+    def load(self, filename):
+        import pickle
+        with open(filename, 'rb') as file:
+            stack = pickle.load(file)
+        return stack
 
     def test(self, where):
         pass

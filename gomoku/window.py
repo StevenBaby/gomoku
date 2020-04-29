@@ -77,19 +77,31 @@ class Ui_MainWindow(object):
         sizePolicy2.setHeightForWidth(self.controller.sizePolicy().hasHeightForWidth())
         self.controller.setSizePolicy(sizePolicy2)
         self.controller.setMinimumSize(QSize(300, 0))
-        self.gridLayout = QGridLayout(self.controller)
-        self.gridLayout.setObjectName(u"gridLayout")
+        self.verticalLayout = QVBoxLayout(self.controller)
+        self.verticalLayout.setObjectName(u"verticalLayout")
         self.reset = QPushButton(self.controller)
         self.reset.setObjectName(u"reset")
         self.reset.setMinimumSize(QSize(0, 45))
 
-        self.gridLayout.addWidget(self.reset, 0, 0, 1, 1)
+        self.verticalLayout.addWidget(self.reset)
 
         self.undo = QPushButton(self.controller)
         self.undo.setObjectName(u"undo")
         self.undo.setMinimumSize(QSize(0, 45))
 
-        self.gridLayout.addWidget(self.undo, 1, 0, 1, 1)
+        self.verticalLayout.addWidget(self.undo)
+
+        self.load = QPushButton(self.controller)
+        self.load.setObjectName(u"load")
+        self.load.setMinimumSize(QSize(0, 45))
+
+        self.verticalLayout.addWidget(self.load)
+
+        self.save = QPushButton(self.controller)
+        self.save.setObjectName(u"save")
+        self.save.setMinimumSize(QSize(0, 45))
+
+        self.verticalLayout.addWidget(self.save)
 
 
         self.window_layout.addWidget(self.controller)
@@ -106,5 +118,7 @@ class Ui_MainWindow(object):
         self.label.setText("")
         self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
         self.undo.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
+        self.load.setText(QCoreApplication.translate("MainWindow", u"Load", None))
+        self.save.setText(QCoreApplication.translate("MainWindow", u"Save", None))
     # retranslateUi
 

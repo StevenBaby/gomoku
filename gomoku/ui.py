@@ -19,6 +19,8 @@ from PySide2.QtCore import Qt
 from PySide2.QtCore import QObject
 from PySide2 import QtCore
 
+from PySide2.QtWidgets import QFileDialog
+
 import gomoku
 import tone
 
@@ -54,7 +56,9 @@ class Board(QLabel):
         logger.debug('get position %s', pos)
         if not pos:
             return
+        self.move(pos)
 
+    def move(self, pos):
         where = (pos[1], pos[0])
         if self.gomoku.has_chess(where):
             return
@@ -150,6 +154,27 @@ class Board(QLabel):
         label = self.labels[node.pos]
         label.setVisible(False)
 
+    def save(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.AnyFile)
+        filename = dialog.getSaveFileName(
+            self, "Open Gomoku", ".", "Gomoku Files (*.pickle)")[0]
+        if not filename:
+            return
+        self.gomoku.save(filename)
+
+    def load(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.AnyFile)
+        filename = dialog.getOpenFileName(
+            self, "Open Gomoku", ".", "Gomoku Files (*.pickle)")[0]
+        if not filename:
+            return
+
+        stack = self.gomoku.load(filename)
+        for where in stack:
+            self.move((where[1], where[0]))
+
 
 class Window(QMainWindow):
 
@@ -165,6 +190,8 @@ class Window(QMainWindow):
 
         self.ui.reset.clicked.connect(self.ui.label.reset)
         self.ui.undo.clicked.connect(self.ui.label.undo)
+        self.ui.load.clicked.connect(self.ui.label.load)
+        self.ui.save.clicked.connect(self.ui.label.save)
 
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
