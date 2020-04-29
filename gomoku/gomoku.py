@@ -9,15 +9,19 @@ import tone
 logger = tone.utils.get_logger()
 
 
-WIDTH = 19
-HEIGHT = WIDTH
+BOARD_WIDTH = 19
+BOARD_HEIGHT = BOARD_WIDTH
 
-EMPTY = 0
-BLACK = 1
-WHITE = -1
+CHESS_EMPTY = 0
+CHESS_BLACK = 1
+CHESS_WHITE = -1
+
+MOVE_STATE_NONE = 0
+MOVE_STATE_FULL = 1
+MOVE_STATE_WIN = 2
 
 
-class Node(tone.utils.attrdict.attrdict):
+class Node(object):
 
     def __init__(
             self,
@@ -34,6 +38,9 @@ class Node(tone.utils.attrdict.attrdict):
         self.children = {}
         self.score = score
 
+        if parent:
+            parent.next_node = self
+
         if where:
             self.pos = (where[1], where[0])
 
@@ -41,7 +48,7 @@ class Node(tone.utils.attrdict.attrdict):
         self.score.summary()
 
 
-class Score(tone.utils.attrdict.attrdict):
+class Score(object):
 
     params = [
         (-1, -1, 'upperleft'),
@@ -77,7 +84,7 @@ class Score(tone.utils.attrdict.attrdict):
     def summary(self):
         scores = {
             "horizontal": self.left + self.right - 1,
-            "vertical": self.left + self.right - 1,
+            "vertical": self.upper + self.lower - 1,
             "principal": self.upperleft + self.lowerright - 1,
             "counter": self.lowerleft + self.upperright - 1,
         }
@@ -116,9 +123,9 @@ class Gomoku(object):
     def valid_where(self, where):
         if where[0] < 0 or where[1] < 0:
             return False
-        if where[0] > WIDTH:
+        if where[0] >= BOARD_WIDTH:
             return False
-        if where[1] > HEIGHT:
+        if where[1] >= BOARD_HEIGHT:
             return False
         return True
 
@@ -135,14 +142,18 @@ class Gomoku(object):
                 if self.board[key] != turn:
                     break
                 setattr(score, attr, getattr(score, attr) + 1)
-
+        logger.debug(score)
         return score
 
     def move(self, where):
         if self.finished:
-            return False
+            return MOVE_STATE_WIN
 
-        self.stack.append(where)
+        if self.board[where] != CHESS_EMPTY:
+            return MOVE_STATE_FULL
+
+        state = MOVE_STATE_NONE
+
         self.board[where] = self.turn
         self.turn *= -1
 
@@ -155,38 +166,48 @@ class Gomoku(object):
         logger.debug('summary %s', score.summary())
         if score.summary() >= Score.MAX_SCORE:
             self.finished = True
+            state = MOVE_STATE_WIN
         self.current.train()
-        return True
+        return state
 
     def reset(self):
-        self.board = mat(zeros((WIDTH, HEIGHT)), dtype=int)
-        self.turn = BLACK
+        self.board = mat(zeros((BOARD_WIDTH, BOARD_HEIGHT)), dtype=int)
+        self.turn = CHESS_BLACK
         self.root = Node()
         self.current = self.root
         self.finished = False
-        self.stack = []
 
     def undo(self):
         if self.current == self.root:
             return None
         node = self.current
         self.current = self.current.parent
-        self.board[node.where] = EMPTY
+        self.board[node.where] = CHESS_EMPTY
         self.finished = False
-        self.stack.pop()
 
         return node
 
     def save(self, filename):
         import pickle
         with open(filename, 'wb') as file:
-            pickle.dump(self.stack, file)
+            pickle.dump(self, file)
 
     def load(self, filename):
         import pickle
-        with open(filename, 'rb') as file:
-            stack = pickle.load(file)
-        return stack
+        try:
+            with open(filename, 'rb') as file:
+                model = pickle.load(file)
+        except Exception:
+            return False
+        if not isinstance(model, Gomoku):
+            return False
+
+        self.board = model.board
+        self.root = model.root
+        self.current = model.current
+        self.finished = model.finished
+
+        return True
 
     def test(self, where):
         pass

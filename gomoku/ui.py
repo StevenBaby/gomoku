@@ -20,6 +20,7 @@ from PySide2.QtCore import QObject
 from PySide2 import QtCore
 
 from PySide2.QtWidgets import QFileDialog
+from PySide2.QtWidgets import QMessageBox
 
 import gomoku
 import tone
@@ -47,25 +48,26 @@ class Board(QLabel):
     def __init__(self, parent):
         super().__init__(parent=parent)
         self.parent = parent
-        self.labels = mat(zeros((gomoku.WIDTH, gomoku.HEIGHT,)), dtype=QLabel)
+        self.labels = mat(zeros((gomoku.BOARD_WIDTH, gomoku.BOARD_HEIGHT,)), dtype=QLabel)
         self.size = 600
         self.gomoku = gomoku.Gomoku()
+        self.refresh()
 
     def mousePressEvent(self, event):
         pos = self.getPosition(event)
         logger.debug('get position %s', pos)
         if not pos:
             return
-        self.move(pos)
 
-    def move(self, pos):
         where = (pos[1], pos[0])
-        if self.gomoku.has_chess(where):
-            return
-
-        turn = self.gomoku.turn
-        if self.gomoku.move(where):
-            self.setChess(pos, turn)
+        state = self.gomoku.move(where)
+        if state == gomoku.MOVE_STATE_NONE:
+            self.refresh()
+        elif state == gomoku.MOVE_STATE_FULL:
+            pass
+        elif state == gomoku.MOVE_STATE_WIN:
+            self.refresh()
+            QMessageBox.information(self.parent, 'Information', "Victory!!!")
 
     def getPosition(self, event):
         x = int((event.x() - self.getEdge()) / self.getCellSize())
@@ -73,7 +75,7 @@ class Board(QLabel):
 
         if x < 0 or y < 0:
             return None
-        if x >= gomoku.WIDTH or y >= gomoku.HEIGHT:
+        if x >= gomoku.BOARD_WIDTH or y >= gomoku.BOARD_HEIGHT:
             return None
 
         pos = (x, y)
@@ -85,14 +87,16 @@ class Board(QLabel):
     def setChess(self, pos, chess):
         label = self.labels[pos]
         if not label:
-            logger.debug('init label for chess')
             label = QLabel(self)
             self.labels[pos] = label
 
-        if chess == gomoku.BLACK:
+        if chess == gomoku.CHESS_BLACK:
             image = QPixmap(BLACK_IMAGE)
-        else:
+        elif chess == gomoku.CHESS_WHITE:
             image = QPixmap(WHITE_IMAGE)
+        else:
+            label.setVisible(False)
+            return
 
         # label.setStyleSheet(u"background-color: rgb(0, 170, 127);")
         label.setPixmap(image)
@@ -100,25 +104,39 @@ class Board(QLabel):
         label.setGeometry(self.getChessGeometry(pos))
         label.setVisible(True)
 
-    def resizeBoard(self):
-        geometry = self.parent.frameGeometry()
-        size = min(geometry.width(), geometry.height())
-
-        x = (geometry.width() - size) // 2
-        y = (geometry.height() - size) // 2
-        self.setGeometry(QRect(x, y, size, size))
-        self.size = size
-
-        for x in range(gomoku.WIDTH):
-            for y in range(gomoku.HEIGHT):
-                pos = (x, y)
-                if not self.hasChess(pos):
-                    continue
-                label = self.labels[pos]
-                label.setGeometry(self.getChessGeometry(pos))
-
     def getCellSize(self):
-        return self.size / (gomoku.WIDTH + 1)
+        return self.size / (gomoku.BOARD_WIDTH + 1)
+
+    def refresh(self):
+        chess = self.gomoku.turn
+        if chess == gomoku.CHESS_BLACK:
+            text = '''<html>
+                    <body>
+                        <p align="center">
+                            <span style=" font-size:14pt; font-weight:600;">
+                                black
+                            </span>
+                        </p>
+                    </body>
+                    </html>'''
+        elif chess == gomoku.CHESS_WHITE:
+            text = '''<html>
+                    <body>
+                        <p align="center">
+                            <span style=" font-size:14pt; font-weight:600;">
+                                white
+                            </span>
+                        </p>
+                    </body>
+                    </html>'''
+        if hasattr(self, 'main'):
+            self.main.ui.chess.setText(text)
+
+        for x in range(gomoku.BOARD_WIDTH):
+            for y in range(gomoku.BOARD_HEIGHT):
+                where = (x, y)
+                pos = (y, x)
+                self.setChess(pos, self.gomoku.board[where])
 
     def getEdge(self):
         return self.getCellSize() / 2
@@ -132,27 +150,52 @@ class Board(QLabel):
         )
 
     def resizeEvent(self, event):
-        self.resizeBoard()
+        geometry = self.parent.frameGeometry()
+        size = min(geometry.width(), geometry.height())
 
-    def reset(self):
-        self.gomoku.reset()
+        x = (geometry.width() - size) // 2
+        y = (geometry.height() - size) // 2
+        self.setGeometry(QRect(x, y, size, size))
+        self.size = size
 
-        for x in range(gomoku.WIDTH):
-            for y in range(gomoku.HEIGHT):
+        for x in range(gomoku.BOARD_WIDTH):
+            for y in range(gomoku.BOARD_HEIGHT):
                 pos = (x, y)
                 if not self.hasChess(pos):
                     continue
                 label = self.labels[pos]
-                label.setVisible(False)
+                label.setGeometry(self.getChessGeometry(pos))
+
+
+class Window(QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+        from window import Ui_MainWindow
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.setWindowIcon(QIcon(ICON_IMAGE))
+        self.setWindowTitle(u"Gomoku")
+        self.ui.label.setPixmap(QPixmap(BOARD_IMAGE))
+        self.ui.label.main = self
+
+        self.gomoku = self.ui.label.gomoku
+
+        self.ui.reset.clicked.connect(self.reset)
+        self.ui.undo.clicked.connect(self.undo)
+        self.ui.load.clicked.connect(self.load)
+        self.ui.save.clicked.connect(self.save)
+
+    def resizeEvent(self, event):
+        self.ui.label.resizeEvent(event)
+
+    def reset(self):
+        self.gomoku.reset()
+        self.ui.label.refresh()
 
     def undo(self):
         node = self.gomoku.undo()
-        if not node:
-            return
-        if not self.hasChess(node.pos):
-            return
-        label = self.labels[node.pos]
-        label.setVisible(False)
+        self.ui.label.refresh()
 
     def save(self):
         dialog = QFileDialog(self)
@@ -171,27 +214,7 @@ class Board(QLabel):
         if not filename:
             return
 
-        stack = self.gomoku.load(filename)
-        for where in stack:
-            self.move((where[1], where[0]))
-
-
-class Window(QMainWindow):
-
-    def __init__(self):
-        super().__init__()
-        from window import Ui_MainWindow
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
-        self.setWindowIcon(QIcon(ICON_IMAGE))
-        self.setWindowTitle(u"Gomoku")
-        self.ui.label.setPixmap(QPixmap(BOARD_IMAGE))
-        self.gomoku = self.ui.label.gomoku
-
-        self.ui.reset.clicked.connect(self.ui.label.reset)
-        self.ui.undo.clicked.connect(self.ui.label.undo)
-        self.ui.load.clicked.connect(self.ui.label.load)
-        self.ui.save.clicked.connect(self.ui.label.save)
-
-    def resizeEvent(self, event):
-        self.ui.label.resizeEvent(event)
+        if self.gomoku.load(filename):
+            self.ui.label.refresh()
+        else:
+            QMessageBox().warning(self, 'Warning', 'Load file failure!!!')

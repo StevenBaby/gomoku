@@ -22,7 +22,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(939, 648)
+        MainWindow.resize(939, 632)
         MainWindow.setMinimumSize(QSize(0, 0))
         icon = QIcon()
         iconThemeName = u"../skins/favicon.ico"
@@ -36,8 +36,8 @@ class Ui_MainWindow(object):
         MainWindow.setStyleSheet(u"")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.window_layout = QHBoxLayout(self.centralwidget)
-        self.window_layout.setObjectName(u"window_layout")
+        self.horizontalLayout = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.container = QWidget(self.centralwidget)
         self.container.setObjectName(u"container")
         self.container.setMinimumSize(QSize(600, 600))
@@ -55,7 +55,7 @@ class Ui_MainWindow(object):
         self.label.setScaledContents(True)
         self.label.setAlignment(Qt.AlignCenter)
 
-        self.window_layout.addWidget(self.container)
+        self.horizontalLayout.addWidget(self.container)
 
         self.line = QFrame(self.centralwidget)
         self.line.setObjectName(u"line")
@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
         self.line.setFrameShape(QFrame.VLine)
         self.line.setFrameShadow(QFrame.Sunken)
 
-        self.window_layout.addWidget(self.line)
+        self.horizontalLayout.addWidget(self.line)
 
         self.controller = QWidget(self.centralwidget)
         self.controller.setObjectName(u"controller")
@@ -79,6 +79,18 @@ class Ui_MainWindow(object):
         self.controller.setMinimumSize(QSize(300, 0))
         self.verticalLayout = QVBoxLayout(self.controller)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.chess = QLabel(self.controller)
+        self.chess.setObjectName(u"chess")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.chess.sizePolicy().hasHeightForWidth())
+        self.chess.setSizePolicy(sizePolicy3)
+        self.chess.setMinimumSize(QSize(0, 45))
+        self.chess.setScaledContents(True)
+
+        self.verticalLayout.addWidget(self.chess)
+
         self.reset = QPushButton(self.controller)
         self.reset.setObjectName(u"reset")
         self.reset.setMinimumSize(QSize(0, 45))
@@ -104,7 +116,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.save)
 
 
-        self.window_layout.addWidget(self.controller)
+        self.horizontalLayout.addWidget(self.controller)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -116,6 +128,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Gomoku", None))
         self.label.setText("")
+        self.chess.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">black</span></p></body></html>", None))
         self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
         self.undo.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
         self.load.setText(QCoreApplication.translate("MainWindow", u"Load", None))
