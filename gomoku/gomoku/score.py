@@ -1,76 +1,118 @@
 # coding=utf-8
+import tone
 
 from . import CHESS_EMPTY
 from . import functions
 
 
+logger = tone.utils.get_logger()
+
+
 class Score(object):
 
-    STEP = [
-        (-1, -1, 'upperleft'),
-        (-1, 0, 'upper'),
-        (-1, 1, 'upperright'),
-        (0, -1, 'left'),
-        (0, 1, 'right'),
-        (1, -1, 'lowerleft'),
-        (1, 0, 'lower'),
-        (1, 1, 'lowerright'),
-    ]
-
-    WEIGHT = {
-        1: 1,
-        2: 10,
-        3: 100,
-        4: 1000,
-        5: 10000,
+    PARAMS = {
+        'horizontal': {
+            'left': {
+                'step': (0, -1),
+                'chess': 0,
+                'empty': 0,
+            },
+            'right': {
+                'step': (0, 1),
+                'chess': 0,
+                'empty': 0,
+            },
+        },
+        'vertical': {
+            'upper': {
+                'step': (-1, 0),
+                'chess': 0,
+                'empty': 0,
+            },
+            'lower': {
+                'step': (1, 0),
+                'chess': 0,
+                'empty': 0,
+            },
+        },
+        'principal': {
+            'upperleft': {
+                'step': (-1, -1),
+                'chess': 0,
+                'empty': 0,
+            },
+            'lowerright': {
+                'step': (1, 1),
+                'chess': 0,
+                'empty': 0,
+            },
+        },
+        'counter': {
+            'lowerleft': {
+                'step': (1, -1),
+                'chess': 0,
+                'empty': 0,
+            },
+            'upperright': {
+                'step': (-1, 1),
+                'chess': 0,
+                'empty': 0,
+            },
+        },
     }
+
+    # WEIGHT = {
+    #     1: 1,
+    #     2: 10,
+    #     3: 100,
+    #     4: 1000,
+    #     5: 10000,
+    # }
 
     MAX_SCORE = 10000
 
-    def __init__(self):
-        self.upperleft = 0
-        self.upper = 0
-        self.upperright = 0
-        self.left = 0
-        self.right = 0
-        self.lowerleft = 0
-        self.lower = 0
-        self.lowerright = 0
+    def __init__(self, board, where):
+        self.board = board
+        self.where = where
+        self.value = tone.utils.attrdict.attrdict.loads(self.PARAMS)
+        self.compute()
 
     def get_score(self):
-        scores = {
-            "horizontal": self.left + self.right - 1,
-            "vertical": self.upper + self.lower - 1,
-            "principal": self.upperleft + self.lowerright - 1,
-            "counter": self.lowerleft + self.upperright - 1,
-        }
+        if hasattr(self, 'summary'):
+            return self.summary
 
         summary = 0
-        for _, score in scores.items():
-            if score > 5:
-                score = 5
-            summary += self.WEIGHT[score]
+        for _, total in self.value.items():
+            for _, direct in total.items():
+                summary += direct.chess * 5
+                summary += direct.empty * 1
+        self.summary = summary
         return summary
 
-    @classmethod
-    def collect_score(cls, board, where):
+    def compute(self):
+        board = self.board
+        where = self.where
         turn = board[where]
 
-        score = Score()
+        for total_name in Score.PARAMS:
+            total = self.value[total_name]
+            for direct_name in Score.PARAMS[total_name]:
+                direct = total[direct_name]
+                x, y = direct.step
 
-        for x, y, attr in Score.STEP:
-            for step in range(0, 5):
-                key = (where[0] + step * x, where[1] + step * y)
-                if not functions.is_valid_where(key):
-                    break
-                if board[key] == turn:
-                    setattr(score, attr, getattr(score, attr) + 1)
-                elif board[key] == CHESS_EMPTY:
-                    # setattr(score, attr, getattr(score, attr) + 1)
-                    break
-                else:
-                    break
-        return score
+                for step in range(0, 5):
+                    move = (where[0] + step * x, where[1] + step * y)
+                    if not functions.is_valid_where(move):
+                        break
+                    chess = board[move]
+                    if chess == turn:
+                        direct.chess += 1
+                        continue
+                    elif chess == CHESS_EMPTY:
+                        direct.empty += 1
+                        continue
+                    else:
+                        break
 
     def __str__(self):
         return str(self.get_score())

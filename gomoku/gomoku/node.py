@@ -37,7 +37,7 @@ class Node(object):
             self.turn = CHESS_WHITE
 
         if self.board is not None and self.where is not None:
-            self.score = Score.collect_score(self.board, self.where)
+            self.score = Score(self.board, self.where)
         else:
             self.score = None
 
@@ -82,29 +82,12 @@ class Node(object):
         return next_node or node
 
     def get_search_keys(self, span=2):
-        wheres = []
-        node = self
-        for var in range(span):
-            if not node and var > span:
-                break
-            wheres.append(node.where)
-            if not node.parent:
-                break
-            node = node.parent
-
-        keys = {}
-        for x, y, attr in Score.STEP:
-            for step in range(0, span):
-                for where in wheres:
-                    if not where:
-                        continue
-                    key = (where[0] + step * x, where[1] + step * y)
-                    if not functions.is_valid_where(key):
-                        break
-                    if self.has_chess(key):
-                        continue
-                    keys[key] = True
-        return keys
+        wheres = functions.get_wheres()
+        result = {}
+        for where in wheres.keys():
+            if self.board[where] == CHESS_EMPTY:
+                result[where] = True
+        return result
 
     def get_next_move(self, depth=DEPTH_DEFAULT, span=5):
         if depth < 0:
