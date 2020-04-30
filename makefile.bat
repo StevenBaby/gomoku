@@ -1,1 +1,1 @@
-pyside2-uic.exe skins/window.ui -o gomoku/window.py
+pyside2-uic.exe gomoku/gui/skins/window.ui -o gomoku/gui/ui.py

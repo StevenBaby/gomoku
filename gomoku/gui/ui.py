@@ -15,7 +15,7 @@ from PySide2.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QPixmap, QRadialGradient)
 from PySide2.QtWidgets import *
 
-from ui import Board
+from board import Board
 
 
 class Ui_MainWindow(object):

@@ -190,7 +190,7 @@
   <customwidget>
    <class>Board</class>
    <extends>QLabel</extends>
-   <header>ui.h</header>
+   <header>board.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
