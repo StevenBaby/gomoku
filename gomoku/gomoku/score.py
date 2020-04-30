@@ -16,11 +16,13 @@ class Score(object):
                 'step': (0, -1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
             'right': {
                 'step': (0, 1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
         },
         'vertical': {
@@ -28,11 +30,13 @@ class Score(object):
                 'step': (-1, 0),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
             'lower': {
                 'step': (1, 0),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
         },
         'principal': {
@@ -40,11 +44,13 @@ class Score(object):
                 'step': (-1, -1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
             'lowerright': {
                 'step': (1, 1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
         },
         'counter': {
@@ -52,11 +58,13 @@ class Score(object):
                 'step': (1, -1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
             'upperright': {
                 'step': (-1, 1),
                 'chess': 0,
                 'empty': 0,
+                'death': 0,
             },
         },
     }
@@ -70,15 +78,36 @@ class Score(object):
         self.compute()
 
     def make(self):
-        for _, total in self.value.items():
-            chess = 0
-            for _, direct in total.items():
-                chess += direct.chess
-                self.score += direct.chess * 5
-                self.score += direct.empty * 1
+        directions = []
 
-            if chess >= 6:  # chess count one more time
+        for name, total in self.value.items():
+            direction = tone.utils.attrdict.attrdict()
+            directions.append(direction)
+            direction.chess = -1
+            direction.death = 0
+            direction.empty = 0
+            direction.score = 0
+            for _, direct in total.items():
+                direction.chess += direct.chess
+                direction.death += direct.death
+                direction.empty += direct.empty
+
+            if direction.chess >= 5:
                 self.finished = True
+                direction.score = 100
+                continue
+
+            if name in ('principal', "counter"):
+                direction.score += 2
+            direction.score += direction.chess * 3
+            direction.score += direction.empty * 1
+            direction.score -= direction.death * 5
+            if direction.death == 2:
+                direction.score = 0
+
+        direct = sorted(directions, key=lambda e: e.score, reverse=True)
+        for var in range(4):
+            self.score += direct[var].score * (0.3 ** var)
 
     def collect(self):
         board = self.board
@@ -91,18 +120,22 @@ class Score(object):
                 direct = total[direct_name]
                 x, y = direct.step
 
+                empty = 0
                 for step in range(0, 5):
                     move = (where[0] + step * x, where[1] + step * y)
                     if not functions.is_valid_where(move):
+                        direct.death += 1
                         break
                     chess = board[move]
                     if chess == turn:
                         direct.chess += 1
                         continue
-                    elif chess == CHESS_EMPTY:
+                    elif chess == CHESS_EMPTY and empty < 2:
+                        empty += 1
                         direct.empty += 1
-                        continue
+                        break
                     else:
+                        direct.death += 1
                         break
 
     def compute(self):

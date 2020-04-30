@@ -36,6 +36,8 @@ class Board(QLabel):
         pos = self.getPosition(event)
         if not pos:
             return
+        if self.hasChess(pos):
+            return
         logger.debug('get position %s', pos)
         where = (pos[1], pos[0])
         self.click(where)
@@ -50,7 +52,10 @@ class Board(QLabel):
         return pos
 
     def hasChess(self, pos):
-        return isinstance(self.labels[pos], QLabel)
+        label = self.labels[pos]
+        if not isinstance(label, QLabel):
+            return False
+        return label.isVisible()
 
     def setChess(self, pos, chess):
         label = self.labels[pos]

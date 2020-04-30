@@ -1,4 +1,5 @@
 # coding=utf-8
+import random
 
 import numpy as np
 from numpy import mat
@@ -69,4 +70,47 @@ class Node(object):
         turn = self.turn * -1
         board[where] = turn
         node = Node(board=board, turn=turn, where=where, parent=self)
-        return node
+
+        next_node = None
+        if next:
+            next_node = node.get_next_move()
+
+        return next_node or node
+
+    def get_next_move(self):
+        nodes = []
+        wheres = functions.get_search_wheres(self.board, span=3)
+        for where in wheres:
+            node = self.move(where, next=False)
+            if not isinstance(node, Node):
+                continue
+            if node.is_finished():
+                return node
+            nodes.append(node)
+
+        self.turn *= -1
+        for where in wheres:
+            node = self.move(where, next=False)
+            if not isinstance(node, Node):
+                continue
+            if node.is_finished():
+                self.turn *= -1
+                return self.move(where, next=False)
+            node.score.score += 1
+            nodes.append(node)
+        self.turn *= -1
+
+        if not nodes:
+            return None
+
+        scores = {}
+        for node in nodes:
+            scores.setdefault(node.score.score, [])
+            scores[node.score.score].append(node)
+
+        nodes = sorted(scores.items(), key=lambda e: e[0], reverse=True)
+        node = random.choice(nodes[0][1])
+        if node.turn == (self.turn * -1):
+            return node
+        else:
+            return self.move(node.where, next=False)

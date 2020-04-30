@@ -11,6 +11,7 @@ from PySide2.QtWidgets import QMessageBox
 
 import tone
 
+import gomoku
 from . import skin
 from gomoku.game import Game
 
@@ -70,7 +71,10 @@ class Window(QMainWindow):
         self.ui.label.node = self.game.head
         self.refresh()
         if self.game.head.score.finished:
-            QMessageBox().warning(self, 'Info', 'Victory!!!')
+            if self.game.head.turn == gomoku.CHESS_BLACK:
+                QMessageBox().information(self, 'Info', 'Victory!!!')
+            else:
+                QMessageBox().information(self, 'Info', 'Lose!!!')
 
     def reset(self):
         self.game.reset()
@@ -78,6 +82,7 @@ class Window(QMainWindow):
         self.refresh()
 
     def undo(self):
+        node = self.game.undo()
         node = self.game.undo()
         self.ui.label.node = self.game.head
         self.refresh()
