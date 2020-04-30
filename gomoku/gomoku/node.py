@@ -48,17 +48,12 @@ class Node(object):
             self.parent = None
 
         self.loss = 0
-        self.children = []
-
-    def summary(self):
-        score = self.score.get_score() * self.turn
-        loss = self.loss
-        return score if abs(score) > abs(loss) else loss
+        self.children = {}
 
     def is_finished(self):
         if not self.score:
             return False
-        return self.score.get_score() >= Score.MAX_SCORE
+        return self.score.finished
 
     def has_chess(self, where):
         return self.board[where] != CHESS_EMPTY
@@ -74,67 +69,4 @@ class Node(object):
         turn = self.turn * -1
         board[where] = turn
         node = Node(board=board, turn=turn, where=where, parent=self)
-
-        next_node = None
-        if node.turn == CHESS_BLACK and next:
-            next_node = node.get_next_move()
-
-        return next_node or node
-
-    def get_search_keys(self, span=2):
-        wheres = functions.get_wheres()
-        result = {}
-        for where in wheres.keys():
-            if self.board[where] == CHESS_EMPTY:
-                result[where] = True
-        return result
-
-    def get_next_move(self, depth=DEPTH_DEFAULT, span=5):
-        if depth < 0:
-            return None
-
-        nodes = []
-        keys = self.get_search_keys(span=span)
-        for key in keys:
-            node = self.move(key, next=False)
-            if not isinstance(node, Node):
-                continue
-            logger.debug("depth %s summary %s where %s", depth, node.summary(), key)
-            nodes.append(node)
-
-        self.turn *= -1
-
-        for key in keys:
-            node = self.move(key, next=False)
-            if not isinstance(node, Node):
-                continue
-            logger.debug("depth %s summary %s where %s", depth, node.summary(), key)
-            nodes.append(node)
-
-        self.turn *= -1
-
-        if not nodes:
-            return None
-
-        scores = {}
-        for node in nodes:
-            summary = node.summary()
-            where = node.where
-            scores.setdefault(where, 0)
-            scores[where] += summary
-            # scores.setdefault(summary, [])
-            # scores[summary].append(node)
-
-        items = sorted(scores.items(), key=lambda e: e[1], reverse=True)
-        where = items[0][0]
-        node = self.move(where, next=False)
         return node
-
-    def __str__(self):
-        chess = 'black'
-        if self.turn == CHESS_WHITE:
-            chess = 'white'
-        return f"Node [{self.where}] - {chess} - {self.summary()}"
-
-    def __repr__(self):
-        return self.__str__()

@@ -40,15 +40,6 @@ class Board(QLabel):
         where = (pos[1], pos[0])
         self.click(where)
 
-        # state = self.gomoku.move(where)
-        # if state == gomoku.MOVE_STATE_NONE:
-        #     self.refresh()
-        # elif state == gomoku.MOVE_STATE_FULL:
-        #     pass
-        # elif state == gomoku.MOVE_STATE_WIN:
-        #     self.refresh()
-        #     QMessageBox.information(self.parent, 'Information', "Victory!!!")
-
     def getPosition(self, event):
         x = int((event.x() - self.getEdge()) / self.getCellSize())
         y = int((event.y() - self.getEdge()) / self.getCellSize())
@@ -85,30 +76,6 @@ class Board(QLabel):
         return self.size / (gomoku.BOARD_WIDTH + 1)
 
     def refresh(self):
-        chess = self.node.turn
-        if chess == gomoku.CHESS_WHITE:
-            text = '''<html>
-                    <body>
-                        <p align="center">
-                            <span style=" font-size:14pt; font-weight:600;">
-                                black
-                            </span>
-                        </p>
-                    </body>
-                    </html>'''
-        elif chess == gomoku.CHESS_BLACK:
-            text = '''<html>
-                    <body>
-                        <p align="center">
-                            <span style=" font-size:14pt; font-weight:600;">
-                                white
-                            </span>
-                        </p>
-                    </body>
-                    </html>'''
-        if hasattr(self, 'main'):
-            self.main.ui.chess.setText(text)
-
         for x in range(gomoku.BOARD_WIDTH):
             for y in range(gomoku.BOARD_HEIGHT):
                 where = (x, y)

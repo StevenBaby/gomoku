@@ -1,9 +1,14 @@
 # coding=utf-8
 
+import tone
+
 from .node import Node
 from . import MOVE_STATE_FULL
 from . import MOVE_STATE_WIN
 from . import MOVE_STATE_NONE
+
+
+logger = tone.utils.get_logger()
 
 
 class Game(object):
@@ -12,10 +17,12 @@ class Game(object):
         self.reset()
 
     def move(self, where):
+        if self.head.is_finished():
+            return MOVE_STATE_WIN
         node = self.head.move(where)
         if not isinstance(node, Node):
             return node
-
+        logger.debug("{} - {}".format(node.score.score, node.score.finished))
         self.head = node
         if self.head.is_finished():
             return MOVE_STATE_WIN
@@ -42,7 +49,7 @@ class Game(object):
                 model = pickle.load(file)
         except Exception:
             return False
-        if not isinstance(model, Gomoku):
+        if not isinstance(model, Game):
             return False
 
         self.root = model.root

@@ -6,6 +6,8 @@ import sys
 from PySide2.QtWidgets import QMainWindow
 from PySide2.QtGui import QIcon
 from PySide2.QtGui import QPixmap
+from PySide2.QtWidgets import QFileDialog
+from PySide2.QtWidgets import QMessageBox
 
 import tone
 
@@ -37,20 +39,48 @@ class Window(QMainWindow):
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
 
+    def refresh(self):
+        import gomoku
+        chess = self.game.head.turn
+        if chess == gomoku.CHESS_WHITE:
+            text = '''<html>
+                    <body>
+                        <p align="center">
+                            <span style=" font-size:14pt; font-weight:600;">
+                                black
+                            </span>
+                        </p>
+                    </body>
+                    </html>'''
+        elif chess == gomoku.CHESS_BLACK:
+            text = '''<html>
+                    <body>
+                        <p align="center">
+                            <span style=" font-size:14pt; font-weight:600;">
+                                white
+                            </span>
+                        </p>
+                    </body>
+                    </html>'''
+        self.ui.chess.setText(text)
+        self.ui.label.refresh()
+
     def click(self, where):
         self.game.move(where)
         self.ui.label.node = self.game.head
-        self.ui.label.refresh()
+        self.refresh()
+        if self.game.head.score.finished:
+            QMessageBox().warning(self, 'Info', 'Victory!!!')
 
     def reset(self):
         self.game.reset()
         self.ui.label.node = self.game.head
-        self.ui.label.refresh()
+        self.refresh()
 
     def undo(self):
         node = self.game.undo()
         self.ui.label.node = self.game.head
-        self.ui.label.refresh()
+        self.refresh()
 
     def save(self):
         dialog = QFileDialog(self)
@@ -71,6 +101,6 @@ class Window(QMainWindow):
 
         if self.game.load(filename):
             self.ui.label.node = self.game.head
-            self.ui.label.refresh()
+            self.refresh()
         else:
             QMessageBox().warning(self, 'Warning', 'Load file failure!!!')

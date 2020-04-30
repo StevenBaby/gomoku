@@ -61,35 +61,26 @@ class Score(object):
         },
     }
 
-    # WEIGHT = {
-    #     1: 1,
-    #     2: 10,
-    #     3: 100,
-    #     4: 1000,
-    #     5: 10000,
-    # }
-
-    MAX_SCORE = 10000
-
     def __init__(self, board, where):
         self.board = board
         self.where = where
         self.value = tone.utils.attrdict.attrdict.loads(self.PARAMS)
+        self.finished = False
+        self.score = 0
         self.compute()
 
-    def get_score(self):
-        if hasattr(self, 'summary'):
-            return self.summary
-
-        summary = 0
+    def make(self):
         for _, total in self.value.items():
+            chess = 0
             for _, direct in total.items():
-                summary += direct.chess * 5
-                summary += direct.empty * 1
-        self.summary = summary
-        return summary
+                chess += direct.chess
+                self.score += direct.chess * 5
+                self.score += direct.empty * 1
 
-    def compute(self):
+            if chess >= 6:  # chess count one more time
+                self.finished = True
+
+    def collect(self):
         board = self.board
         where = self.where
         turn = board[where]
@@ -114,5 +105,6 @@ class Score(object):
                     else:
                         break
 
-    def __str__(self):
-        return str(self.get_score())
+    def compute(self):
+        self.collect()
+        self.make()
