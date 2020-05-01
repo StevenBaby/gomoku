@@ -28,6 +28,18 @@ class Game(object):
             return MOVE_STATE_WIN
         return MOVE_STATE_NONE
 
+    def next_node(self, depth=2):
+        if self.head.is_finished():
+            return MOVE_STATE_WIN
+        node = self.head.next_node(depth=depth)
+        if not isinstance(node, Node):
+            return node
+        logger.debug("{} - {}".format(node.score.score, node.score.finished))
+        self.head = node
+        if self.head.is_finished():
+            return MOVE_STATE_WIN
+        return MOVE_STATE_NONE
+
     def reset(self):
         self.root = Node()
         self.head = self.root

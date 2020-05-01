@@ -70,15 +70,13 @@ class Node(object):
         turn = self.turn * -1
         board[where] = turn
         node = Node(board=board, turn=turn, where=where, parent=self)
+        return node
 
-        next_node = None
-        if next:
-            next_node = node.get_next_move()
+    def next_node(self, depth=2):
+        if depth == 0:
+            return None
 
-        return next_node or node
-
-    def get_next_move(self):
-        nodes = []
+        nodes = {}
         wheres = functions.get_search_wheres(self.board, span=3)
         for where in wheres:
             node = self.move(where, next=False)
@@ -86,31 +84,34 @@ class Node(object):
                 continue
             if node.is_finished():
                 return node
-            nodes.append(node)
 
-        self.turn *= -1
-        for where in wheres:
-            node = self.move(where, next=False)
-            if not isinstance(node, Node):
-                continue
-            if node.is_finished():
-                self.turn *= -1
-                return self.move(where, next=False)
-            node.score.score += 1
-            nodes.append(node)
-        self.turn *= -1
+            nodes.setdefault(node.score.score, [])
+            nodes[node.score.score].append(node)
 
         if not nodes:
             return None
 
-        scores = {}
-        for node in nodes:
-            scores.setdefault(node.score.score, [])
-            scores[node.score.score].append(node)
+        nodes = sorted(nodes.items(), key=lambda e: e[0], reverse=True)
+        score = nodes[0][0]
 
-        nodes = sorted(scores.items(), key=lambda e: e[0], reverse=True)
-        node = random.choice(nodes[0][1])
-        if node.turn == (self.turn * -1):
-            return node
+        next_nodes = {}
+        for node in nodes[0][1]:
+            next_node = node.next_node(depth=depth - 1)
+            if not isinstance(next_node, Node):
+                continue
+            if next_node.is_finished():
+                return self.move(next_node.where)
+            next_nodes.setdefault(next_node.score.score, [])
+            next_nodes[next_node.score.score].append(next_node)
+
+        if not next_nodes:
+            return random.choice(nodes[0][1])
+
+        next_nodes = sorted(next_nodes.items(), key=lambda e: e[0], reverse=True)
+        next_score = nodes[0][0]
+
+        if score > next_score:
+            return random.choice(nodes[0][1])
         else:
-            return self.move(node.where, next=False)
+            node = random.choice(next_nodes[0][1])
+            return self.move(node.where)

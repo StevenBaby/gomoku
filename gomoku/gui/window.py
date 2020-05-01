@@ -66,15 +66,27 @@ class Window(QMainWindow):
         self.ui.chess.setText(text)
         self.ui.label.refresh()
 
-    def click(self, where):
-        self.game.move(where)
-        self.ui.label.node = self.game.head
-        self.refresh()
+    def check(self):
         if self.game.head.score.finished:
             if self.game.head.turn == gomoku.CHESS_BLACK:
                 QMessageBox().information(self, 'Info', 'Victory!!!')
             else:
                 QMessageBox().information(self, 'Info', 'Lose!!!')
+            return True
+        return False
+
+    def click(self, where):
+        self.game.move(where)
+        self.ui.label.node = self.game.head
+        self.refresh()
+        if self.check():
+            return
+
+        self.game.next_node(depth=2)
+        self.ui.label.node = self.game.head
+        self.refresh()
+        if self.check():
+            return
 
     def reset(self):
         self.game.reset()
