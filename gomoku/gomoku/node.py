@@ -27,29 +27,24 @@ class Node(object):
     def __init__(self, board=None, where=None, turn=None, parent=None):
         self.where = where
         self.next = None
+        self.turn = CHESS_WHITE
+        self.score = None
+        self.parent = None
 
         if board is not None:
             self.board = board
         else:
             self.board = mat(zeros((BOARD_WIDTH, BOARD_HEIGHT)), dtype=int)
-        if turn:
+
+        if turn is not None:
             self.turn = turn
-        else:
-            self.turn = CHESS_WHITE
 
         if self.board is not None and self.where is not None:
             self.score = Score(self.board, self.where)
-        else:
-            self.score = None
 
         if parent:
             self.parent = parent
             parent.next = self
-        else:
-            self.parent = None
-
-        self.loss = 0
-        self.children = {}
 
     def is_finished(self):
         if not self.score:
@@ -59,7 +54,12 @@ class Node(object):
     def has_chess(self, where):
         return self.board[where] != CHESS_EMPTY
 
-    def move(self, where):
+    def get_score(self):
+        if not self.score:
+            return 0
+        return self.score.score
+
+    def move(self, where, reverse=True):
         if self.has_chess(where):
             return MOVE_STATE_FULL
 
@@ -67,57 +67,51 @@ class Node(object):
             return MOVE_STATE_WIN
 
         board = self.board.copy()
-        turn = self.turn * -1
+        if reverse:
+            turn = self.turn * -1
+        else:
+            turn = self.turn
         board[where] = turn
         node = Node(board=board, turn=turn, where=where, parent=self)
         return node
 
-    def next_node(self, depth=2):
+    def detect_move(self, span=3):
+        nodes = {}
+        wheres = functions.get_search_wheres(self.board, span=span)
+        for where in wheres:
+            node = self.move(where)
+            if not isinstance(node, Node):
+                continue
+
+            nodes.setdefault(node.get_score(), [])
+            nodes[node.get_score()].append(node)
+            if node.is_finished():
+                return nodes
+
+            node = self.move(where, reverse=False)
+            if not isinstance(node, Node):
+                continue
+
+            nodes.setdefault(node.get_score(), [])
+            nodes[node.get_score()].append(node)
+            if node.is_finished():
+                return nodes
+
+        return nodes
+
+    def next_move(self, depth=2, span=3):
         if depth == 0:
             return None
 
-        nodes = []
-        wheres = functions.get_search_wheres(self.board, span=3)
-        for where in wheres:
-            node = self.move(where)
-            if not isinstance(node, Node):
-                continue
-            if node.is_finished():
-                return node
-            nodes.append(node)
-
+        nodes = self.detect_move(span=span)
         if not nodes:
             return None
 
-        counter_nodes = []
-        self.turn *= -1
-        for where in wheres:
-            node = self.move(where)
-            if not isinstance(node, Node):
-                continue
-            if node.is_finished():
-                self.turn *= -1
-                return self.move(where)
-            counter_nodes.append(node)
-        self.turn *= -1
+        nodes = sorted(nodes.items(), key=lambda e: e[0], reverse=True)
+        node_list = nodes[0][1]
 
-        nodes = sorted(nodes, key=lambda e: e.score.score, reverse=True)
-        counter_nodes = sorted(counter_nodes, key=lambda e: e.score.score, reverse=True)
-
-        node = nodes[0]
-        counter_node = counter_nodes[0]
-
-        if node.score.score > counter_node.score.score:
-            return node
+        node = random.choice(node_list)
+        if node.turn == self.turn:
+            return self.move(node.where)
         else:
-            return self.move(counter_node.where)
-
-        # for node in nodes:
-        #     next_node = node.next_node(depth=depth - 1)
-        #     if not isinstance(next_node, Node):
-        #         continue
-        #     if abs(next_node.score.score) > abs(node.score.score):
-        #         node.score.score = next_node.score.score * node.turn
-
-        # nodes = sorted(nodes, key=lambda e: e.score.score, reverse=True)
-        # return nodes[0]
+            return node

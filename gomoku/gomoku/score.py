@@ -130,34 +130,34 @@ class Score(object):
                 d.score = Score.SCORE_LEVEL_7
 
             elif d.chess == 3 and d.suffix >= 1:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 2 and d.suffix >= 2:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 1 and d.suffix >= 3:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 3 and d.death == 0:
-                d.score == Score.SCORE_LEVEL_6
+                d.score == Score.SCORE_LEVEL_5
 
             elif d.chess == 2 and d.death == 0:
-                self.score = Score.SCORE_LEVEL_5
+                d.score = Score.SCORE_LEVEL_4
 
             elif d.chess == 1 and d.death == 0:
-                self.score = Score.SCORE_LEVEL_4
+                d.score = Score.SCORE_LEVEL_3
 
             elif d.chess == 3 and d.death == 1:
-                self.score = Score.SCORE_LEVEL_3
+                d.score = Score.SCORE_LEVEL_3
 
             elif d.chess == 2 and d.death == 1:
-                self.score = Score.SCORE_LEVEL_2
+                d.score = Score.SCORE_LEVEL_2
 
             elif d.chess == 1 and d.death == 1:
-                self.score = Score.SCORE_LEVEL_1
+                d.score = Score.SCORE_LEVEL_1
 
             if name in ('principal', "counter"):
-                d.score += (d.score / 2)
+                d.score += 1
 
         direct = sorted(directions, key=lambda e: e.score, reverse=True)
         self.score = direct[0].score + direct[1].score * 0.5

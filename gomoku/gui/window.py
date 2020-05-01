@@ -76,13 +76,13 @@ class Window(QMainWindow):
         return False
 
     def click(self, where):
-        self.game.move(where)
+        self.game.move(where=where)
         self.ui.label.node = self.game.head
         self.refresh()
         if self.check():
             return
 
-        self.game.next_node(depth=2)
+        self.game.move(depth=2)
         self.ui.label.node = self.game.head
         self.refresh()
         if self.check():
