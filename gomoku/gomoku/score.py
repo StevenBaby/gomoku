@@ -79,14 +79,14 @@ class Score(object):
 
     SCORE_LEVEL_0 = 0
     SCORE_LEVEL_1 = 1
-    SCORE_LEVEL_2 = 2 * SCORE_LEVEL_1 + 1
-    SCORE_LEVEL_3 = 2 * SCORE_LEVEL_2 + 1
-    SCORE_LEVEL_4 = 2 * SCORE_LEVEL_3 + 1
-    SCORE_LEVEL_5 = 2 * SCORE_LEVEL_4 + 1
-    SCORE_LEVEL_6 = 2 * SCORE_LEVEL_5 + 1
-    SCORE_LEVEL_7 = 2 * SCORE_LEVEL_6 + 1
-    SCORE_LEVEL_8 = 2 * SCORE_LEVEL_7 + 1
-    SCORE_LEVEL_9 = 2 * SCORE_LEVEL_8 + 1
+    SCORE_LEVEL_2 = (2 * SCORE_LEVEL_1) + 1
+    SCORE_LEVEL_3 = (2 * SCORE_LEVEL_2) + 1
+    SCORE_LEVEL_4 = (2 * SCORE_LEVEL_3) + 1
+    SCORE_LEVEL_5 = (2 * SCORE_LEVEL_4) + 1
+    SCORE_LEVEL_6 = (2 * SCORE_LEVEL_5) + 1
+    SCORE_LEVEL_7 = (2 * SCORE_LEVEL_6) + 1
+    SCORE_LEVEL_8 = (2 * SCORE_LEVEL_7) + 1
+    SCORE_LEVEL_9 = (2 * SCORE_LEVEL_8) + 1
 
     def __init__(self, board, where):
         self.board = board
