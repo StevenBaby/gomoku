@@ -170,7 +170,7 @@ class Score(object):
                 d.score += 1
 
         direct = sorted(directions, key=lambda e: e.score, reverse=True)
-        self.score = direct[0].score + direct[1].score * 0.5
+        self.score = direct[0].score + direct[1].score
 
     def collect(self):
         board = self.board
