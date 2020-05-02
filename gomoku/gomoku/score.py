@@ -109,7 +109,8 @@ class Score(object):
             d.score = 0
 
             for _, direct in total.items():
-                d.suffix += direct.suffix
+                if direct.suffix > d.suffix:
+                    d.suffix = direct.suffix
                 d.chess += direct.chess
                 d.death += direct.death
                 d.empty += direct.empty
@@ -127,7 +128,7 @@ class Score(object):
                 d.score = Score.SCORE_LEVEL_8
 
             elif d.chess == 4 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 3 and d.suffix >= 1:
                 d.score = Score.SCORE_LEVEL_6
@@ -141,8 +142,17 @@ class Score(object):
             elif d.chess == 3 and d.death == 0:
                 d.score == Score.SCORE_LEVEL_5
 
+            elif d.chess == 2 and d.suffix >= 1:
+                d.score == Score.SCORE_LEVEL_5
+
+            elif d.chess == 1 and d.suffix >= 2:
+                d.score == Score.SCORE_LEVEL_5
+
             elif d.chess == 2 and d.death == 0:
                 d.score = Score.SCORE_LEVEL_4
+
+            elif d.chess == 1 and d.suffix >= 1:
+                d.score == Score.SCORE_LEVEL_4
 
             elif d.chess == 1 and d.death == 0:
                 d.score = Score.SCORE_LEVEL_3
