@@ -87,21 +87,26 @@ class Score(object):
     SCORE_LEVEL_7 = (2 * SCORE_LEVEL_6) + 1
     SCORE_LEVEL_8 = (2 * SCORE_LEVEL_7) + 1
     SCORE_LEVEL_9 = (2 * SCORE_LEVEL_8) + 1
+    SCORE_LEVEL_10 = (2 * SCORE_LEVEL_9) + 1
 
     def __init__(self, board, where):
         self.board = board
         self.where = where
-        self.value = tone.utils.attrdict.attrdict.loads(self.PARAMS)
+        self.cvalue = tone.utils.attrdict.attrdict.loads(self.PARAMS)
+        self.rvalue = tone.utils.attrdict.attrdict.loads(self.PARAMS)
         self.finished = False
+        self.cscore = 0
+        self.rscore = 0
         self.score = 0
         self.compute()
 
-    def make(self):
+    def make(self, value):
         directions = []
 
-        for name, total in self.value.items():
+        for name, total in value.items():
             d = tone.utils.attrdict.attrdict()
             directions.append(d)
+            d.name = name[0]
             d.chess = -1
             d.death = 0
             d.empty = 0
@@ -116,8 +121,7 @@ class Score(object):
                 d.empty += direct.empty
 
             if d.chess >= 5:
-                self.finished = True
-                d.score = Score.SCORE_LEVEL_9
+                d.score = Score.SCORE_LEVEL_10
                 continue
 
             if d.death == 2:
@@ -125,60 +129,68 @@ class Score(object):
                 continue
 
             if d.chess == 4 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_8
+                d.score = Score.SCORE_LEVEL_9
 
             elif d.chess == 4 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.SCORE_LEVEL_8
 
             elif d.chess == 3 and d.suffix >= 1:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.SCORE_LEVEL_8
 
             elif d.chess == 2 and d.suffix >= 2:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.SCORE_LEVEL_8
 
             elif d.chess == 1 and d.suffix >= 3:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.SCORE_LEVEL_8
 
             elif d.chess == 3 and d.death == 0:
-                d.score == Score.SCORE_LEVEL_5
+                d.score = Score.SCORE_LEVEL_7
 
             elif d.chess == 2 and d.suffix >= 1:
-                d.score == Score.SCORE_LEVEL_5
+                d.score = Score.SCORE_LEVEL_7
 
             elif d.chess == 1 and d.suffix >= 2:
-                d.score == Score.SCORE_LEVEL_5
+                d.score = Score.SCORE_LEVEL_7
 
             elif d.chess == 2 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_4
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 1 and d.suffix >= 1:
-                d.score == Score.SCORE_LEVEL_4
-
-            elif d.chess == 1 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_3
+                d.score = Score.SCORE_LEVEL_6
 
             elif d.chess == 3 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_3
+                d.score = Score.SCORE_LEVEL_5
 
             elif d.chess == 2 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_2
+                d.score = Score.SCORE_LEVEL_4
+
+            elif d.chess == 1 and d.death == 0:
+                d.score = Score.SCORE_LEVEL_4
 
             elif d.chess == 1 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_1
+                d.score = Score.SCORE_LEVEL_3
 
-            if name in ('principal', "counter"):
-                d.score += 1
+            if d.score == 0:
+                raise Exception('score not define %s' % d)
+                logger.error('error %s', d)
+
+            d.score += d.empty
+            # if name in ('principal', "counter"):
+            #     d.score += 1
 
         direct = sorted(directions, key=lambda e: e.score, reverse=True)
-        self.score = direct[0].score + direct[1].score
+        return direct
 
-    def collect(self):
+    def collect(self, value, reverse=False):
         board = self.board
         where = self.where
         turn = board[where]
 
+        if reverse:
+            turn *= -1
+
         for total_name in Score.PARAMS:
-            total = self.value[total_name]
+            total = value[total_name]
             for direct_name in Score.PARAMS[total_name]:
                 direct = total[direct_name]
                 x, y = direct.step
@@ -189,19 +201,39 @@ class Score(object):
                         direct.death += 1
                         break
                     chess = board[move]
+                    if reverse and move == self.where:
+                        chess *= -1
                     if chess == turn and direct.empty == 1:
                         direct.suffix += 1
                         continue
                     if chess == turn and direct.empty == 0:
                         direct.chess += 1
                         continue
-                    if chess == CHESS_EMPTY and direct.empty < 2:
+                    if chess == CHESS_EMPTY and direct.empty < 2 and direct.suffix == 0:
                         direct.empty += 1
                         continue
                     if chess != turn and direct.empty == 0:
                         direct.death += 1
                         break
+                    if chess != turn and direct.empty == 1:
+                        break
 
     def compute(self):
-        self.collect()
-        self.make()
+        self.collect(self.cvalue, reverse=False)
+        direct = self.make(self.cvalue)
+        self.cscore = 0
+        percent = 0.99
+        # for index, d in enumerate(direct):
+        #     self.cscore += d.score * (percent ** index)
+        self.cscore = sum([direct[0].score, direct[1].score])
+        if [var for var in direct if var.chess >= 5]:
+            self.finished = True
+
+        self.collect(self.rvalue, reverse=True)
+        direct = self.make(self.rvalue)
+        # for index, d in enumerate(direct):
+        #     self.rscore += d.score * (percent ** index)
+        self.rscore = sum([direct[0].score, direct[1].score])
+
+        self.score = max(self.cscore, self.rscore * percent)
+        # self.score = self.cscore + self.rscore

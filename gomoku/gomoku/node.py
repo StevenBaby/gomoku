@@ -30,6 +30,7 @@ class Node(object):
         self.turn = CHESS_WHITE
         self.score = None
         self.parent = None
+        self.depth = 0
 
         if board is not None:
             self.board = board
@@ -44,6 +45,7 @@ class Node(object):
 
         if parent:
             self.parent = parent
+            self.depth = parent.depth + 1
             parent.next = self
 
     def is_finished(self):
@@ -74,6 +76,7 @@ class Node(object):
         board = self.board.copy()
         if reverse:
             turn = self.turn * -1
+            # turn = self.turn
         else:
             turn = self.turn
 
@@ -99,15 +102,16 @@ class Node(object):
             if node.is_finished():
                 break
 
-            node = self.move(where, reverse=False)
-            if not isinstance(node, Node):
-                continue
+            # node = self.move(where, reverse=False)
+            # if not isinstance(node, Node):
+            #     continue
 
-            node.set_score(node.get_score() / 2 + 1)
-            nodes.setdefault(node.get_score(), [])
-            nodes[node.get_score()].append(node)
-            if node.is_finished():
-                break
+            # node.set_score(node.get_score() / 2 + 1)
+            # nodes.setdefault(node.get_score(), [])
+            # nodes[node.get_score()].append(node)
+            # if node.is_finished():
+            #     break
+
         nodes = sorted(nodes.items(), key=lambda e: e[0], reverse=True)
         return nodes
 
@@ -120,7 +124,7 @@ class Node(object):
             return None
 
         result_nodes = []
-        max_detect_node = 5
+        max_detect_node = 8
         for score, nodes in score_nodes:
             if max_detect_node == 0:
                 break
