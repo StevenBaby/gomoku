@@ -103,7 +103,7 @@ class Node(object):
             if not isinstance(node, Node):
                 continue
 
-            node.set_score(node.get_score() / 2)
+            node.set_score(node.get_score() / 2 + 1)
             nodes.setdefault(node.get_score(), [])
             nodes[node.get_score()].append(node)
             if node.is_finished():
@@ -120,7 +120,7 @@ class Node(object):
             return None
 
         result_nodes = []
-        max_detect_node = 3
+        max_detect_node = 5
         for score, nodes in score_nodes:
             if max_detect_node == 0:
                 break
