@@ -59,6 +59,11 @@ class Node(object):
             return 0
         return self.score.score
 
+    def set_score(self, score):
+        if not self.score:
+            return
+        self.score.score = score
+
     def move(self, where, reverse=True):
         if self.has_chess(where):
             return MOVE_STATE_FULL
@@ -71,11 +76,17 @@ class Node(object):
             turn = self.turn * -1
         else:
             turn = self.turn
+
         board[where] = turn
         node = Node(board=board, turn=turn, where=where, parent=self)
+        if not reverse:
+            node.turn *= -1
+            board[where] = node.turn
+            node.score.finished = False
+
         return node
 
-    def detect_move(self, span=3):
+    def detect_move(self, span=2):
         nodes = {}
         wheres = functions.get_search_wheres(self.board, span=span)
         for where in wheres:
@@ -86,32 +97,56 @@ class Node(object):
             nodes.setdefault(node.get_score(), [])
             nodes[node.get_score()].append(node)
             if node.is_finished():
-                return nodes
+                break
 
             node = self.move(where, reverse=False)
             if not isinstance(node, Node):
                 continue
 
+            node.set_score(node.get_score() / 2)
             nodes.setdefault(node.get_score(), [])
             nodes[node.get_score()].append(node)
             if node.is_finished():
-                return nodes
-
+                break
+        nodes = sorted(nodes.items(), key=lambda e: e[0], reverse=True)
         return nodes
 
-    def next_move(self, depth=2, span=3):
+    def next_move(self, depth=2, span=2):
         if depth == 0:
             return None
 
-        nodes = self.detect_move(span=span)
-        if not nodes:
+        score_nodes = self.detect_move(span=span)
+        if not score_nodes:
             return None
 
-        nodes = sorted(nodes.items(), key=lambda e: e[0], reverse=True)
-        node_list = nodes[0][1]
+        result_nodes = []
+        max_detect_node = 3
+        for score, nodes in score_nodes:
+            if max_detect_node == 0:
+                break
+            for node in nodes:
+                logger.debug(node)
+                if max_detect_node == 0:
+                    break
+                if node.is_finished():
+                    return node
+                next_node = node.next_move(depth=depth - 1, span=span)
+                if not next_node:
+                    result_nodes.append(node)
+                    max_detect_node -= 1
+                    continue
 
-        node = random.choice(node_list)
-        if node.turn == self.turn:
-            return self.move(node.where)
-        else:
-            return node
+                if next_node.get_score() > node.get_score():
+                    node.set_score(-next_node.get_score())
+                result_nodes.append(node)
+                max_detect_node -= 1
+
+        nodes = sorted(result_nodes, key=lambda e: e.get_score(), reverse=True)
+        return nodes[0]
+        # node_list = nodes[0][1]
+
+        # node = random.choice(node_list)
+        # if node.turn == self.turn:
+        #     return self.move(node.where)
+        # else:
+        #     return node
