@@ -77,17 +77,18 @@ class Score(object):
         },
     }
 
-    SCORE_LEVEL_0 = 0
-    SCORE_LEVEL_1 = 1
-    SCORE_LEVEL_2 = (2 * SCORE_LEVEL_1) + 1
-    SCORE_LEVEL_3 = (2 * SCORE_LEVEL_2) + 1
-    SCORE_LEVEL_4 = (2 * SCORE_LEVEL_3) + 1
-    SCORE_LEVEL_5 = (2 * SCORE_LEVEL_4) + 1
-    SCORE_LEVEL_6 = (2 * SCORE_LEVEL_5) + 1
-    SCORE_LEVEL_7 = (2 * SCORE_LEVEL_6) + 1
-    SCORE_LEVEL_8 = (2 * SCORE_LEVEL_7) + 1
-    SCORE_LEVEL_9 = (2 * SCORE_LEVEL_8) + 1
-    SCORE_LEVEL_10 = (2 * SCORE_LEVEL_9) + 1
+    GAP = 2.1
+    LEVEL_0 = 0
+    LEVEL_1 = 1
+    LEVEL_2 = (GAP * LEVEL_1)
+    LEVEL_3 = (GAP * LEVEL_2)
+    LEVEL_4 = (GAP * LEVEL_3)
+    LEVEL_5 = (GAP * LEVEL_4)
+    LEVEL_6 = (GAP * LEVEL_5)
+    LEVEL_7 = (GAP * LEVEL_6)
+    LEVEL_8 = (GAP * LEVEL_7)
+    LEVEL_9 = (GAP * LEVEL_8)
+    LEVEL_10 = (GAP * LEVEL_9)
 
     def __init__(self, board, where):
         self.board = board
@@ -121,54 +122,54 @@ class Score(object):
                 d.empty += direct.empty
 
             if d.chess >= 5:
-                d.score = Score.SCORE_LEVEL_10
+                d.score = Score.LEVEL_10
                 continue
 
             if d.death == 2:
-                d.score = Score.SCORE_LEVEL_0
+                d.score = Score.LEVEL_0
                 continue
 
             if d.chess == 4 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_9
+                d.score = Score.LEVEL_9
 
             elif d.chess == 4 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_8
+                d.score = Score.LEVEL_8 + 1
 
             elif d.chess == 3 and d.suffix >= 1:
-                d.score = Score.SCORE_LEVEL_8
+                d.score = Score.LEVEL_8
 
             elif d.chess == 2 and d.suffix >= 2:
-                d.score = Score.SCORE_LEVEL_8
+                d.score = Score.LEVEL_8
 
             elif d.chess == 1 and d.suffix >= 3:
-                d.score = Score.SCORE_LEVEL_8
+                d.score = Score.LEVEL_8
 
             elif d.chess == 3 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.LEVEL_7 + 1
 
             elif d.chess == 2 and d.suffix >= 1:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.LEVEL_7
 
             elif d.chess == 1 and d.suffix >= 2:
-                d.score = Score.SCORE_LEVEL_7
+                d.score = Score.LEVEL_7
 
             elif d.chess == 2 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.LEVEL_6
 
             elif d.chess == 1 and d.suffix >= 1:
-                d.score = Score.SCORE_LEVEL_6
+                d.score = Score.LEVEL_6
 
             elif d.chess == 3 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_5
+                d.score = Score.LEVEL_5
 
             elif d.chess == 2 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_4
+                d.score = Score.LEVEL_4
 
             elif d.chess == 1 and d.death == 0:
-                d.score = Score.SCORE_LEVEL_4
+                d.score = Score.LEVEL_4
 
             elif d.chess == 1 and d.death == 1:
-                d.score = Score.SCORE_LEVEL_3
+                d.score = Score.LEVEL_3
 
             if d.score == 0:
                 raise Exception('score not define %s' % d)
@@ -223,7 +224,7 @@ class Score(object):
         self.collect(self.cvalue, reverse=False)
         direct = self.make(self.cvalue)
         self.cscore = 0
-        percent = 0.99
+        # percent = 0.99
         # for index, d in enumerate(direct):
         #     self.cscore += d.score * (percent ** index)
         self.cscore = sum([direct[0].score, direct[1].score])
@@ -236,5 +237,5 @@ class Score(object):
         #     self.rscore += d.score * (percent ** index)
         self.rscore = sum([direct[0].score, direct[1].score])
 
-        self.score = max(self.cscore, self.rscore * percent)
+        self.score = max(self.cscore, self.rscore - 1)
         # self.score = self.cscore + self.rscore
