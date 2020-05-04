@@ -94,8 +94,7 @@ class Window(QMainWindow):
         self.refresh()
 
     def undo(self):
-        node = self.game.undo()
-        node = self.game.undo()
+        self.game.undo()
         self.ui.label.node = self.game.head
         self.refresh()
 

@@ -6,6 +6,8 @@ from .node import Node
 from . import MOVE_STATE_FULL
 from . import MOVE_STATE_WIN
 from . import MOVE_STATE_NONE
+from . import CHESS_BLACK
+from . import CHESS_WHITE
 
 
 logger = tone.utils.get_logger()
@@ -41,7 +43,10 @@ class Game(object):
     def undo(self):
         if self.head == self.root:
             return None
-        self.head = self.head.parent
+        if self.head.turn == CHESS_BLACK:
+            self.head = self.head.parent
+        else:
+            self.head = self.head.parent.parent
 
     def save(self, filename):
         import pickle

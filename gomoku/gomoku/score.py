@@ -174,7 +174,8 @@ class Score(object):
                 raise Exception('score not define %s' % d)
                 logger.error('error %s', d)
 
-            d.score += d.empty
+            if d.empty:
+                d.score += 1
             # if name in ('principal', "counter"):
             #     d.score += 1
 
