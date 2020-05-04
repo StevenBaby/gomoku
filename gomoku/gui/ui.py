@@ -50,7 +50,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
         self.label.setSizePolicy(sizePolicy)
         self.label.setMinimumSize(QSize(600, 0))
-        self.label.setStyleSheet(u"background-color: rgb(170, 170, 127);")
         self.label.setPixmap(QPixmap(u"board.png"))
         self.label.setScaledContents(True)
         self.label.setAlignment(Qt.AlignCenter)

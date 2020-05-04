@@ -48,6 +48,20 @@ class Node(object):
             self.depth = parent.depth + 1
             parent.next = self
 
+    def __str__(self):
+        return f'{self.where} - {self.turn_name()} - {self.get_score()}'
+
+    def __repr__(self):
+        return self.__str__()
+
+    def turn_name(self):
+        if self.turn == CHESS_BLACK:
+            return 'B'
+        elif self.turn == CHESS_WHITE:
+            return 'W'
+        else:
+            return ' '
+
     def is_finished(self):
         if not self.score:
             return False
@@ -124,7 +138,7 @@ class Node(object):
             return None
 
         result_nodes = []
-        max_detect_node = 8
+        max_detect_node = 4
         for score, nodes in score_nodes:
             if max_detect_node == 0:
                 break
