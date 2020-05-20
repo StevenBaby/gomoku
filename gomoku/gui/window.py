@@ -82,7 +82,7 @@ class Window(QMainWindow):
         if self.check():
             return
 
-        self.game.move(depth=3, span=2)
+        self.game.move(depth=5, span=2)
         self.ui.label.node = self.game.head
         self.refresh()
         if self.check():

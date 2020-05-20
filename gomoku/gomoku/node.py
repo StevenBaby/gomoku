@@ -31,6 +31,7 @@ class Node(object):
         self.score = None
         self.parent = None
         self.depth = 0
+        self.Node = type(self)
 
         if board is not None:
             self.board = board
@@ -95,7 +96,7 @@ class Node(object):
             turn = self.turn
 
         board[where] = turn
-        node = Node(board=board, turn=turn, where=where, parent=self)
+        node = self.Node(board=board, turn=turn, where=where, parent=self)
         if not reverse:
             node.turn *= -1
             board[where] = node.turn
