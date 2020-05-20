@@ -20,18 +20,18 @@ class Game(object):
     def __init__(self):
         self.reset()
 
-    def move(self, where=None, depth=2, span=2):
+    def move(self, where=None, depth=2, span=1, top=5):
         if self.head.is_finished():
             return MOVE_STATE_WIN
 
         if where:
             node = self.head.move(where)
         else:
-            node = self.head.next_move(depth=depth, span=span)
+            node = self.head.next_move(depth=depth, span=span, top=top)
         if not isinstance(node, Node):
             return node
 
-        logger.debug("{} - {}".format(node.score.score, node.score.finished))
+        logger.debug("{:0.2f} - {}".format(node.score.score, node.score.finished))
 
         self.head = node
         if self.head.is_finished():
