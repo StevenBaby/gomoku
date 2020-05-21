@@ -223,19 +223,24 @@ class Score(object):
     def compute(self):
         self.collect(self.cvalue, reverse=False)
         direct = self.make(self.cvalue)
-        self.cscore = 0
-        # percent = 0.99
-        # for index, d in enumerate(direct):
-        #     self.cscore += d.score * (percent ** index)
-        self.cscore = sum([direct[0].score, direct[1].score])
+        self.cscore = direct[0].score
+        for var in range(1, 3):
+            if direct[var].chess >= 3:
+                self.cscore += direct[1].score
+
+        # self.cscore = sum([direct[0].score, direct[1].score])
+
         if [var for var in direct if var.chess >= 5]:
             self.finished = True
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)
-        # for index, d in enumerate(direct):
-        #     self.rscore += d.score * (percent ** index)
-        self.rscore = sum([direct[0].score, direct[1].score])
+        self.rscore = direct[0].score
+        for var in range(1, 3):
+            if direct[var].chess >= 3:
+                self.rscore += direct[1].score
 
-        # self.score = max(self.cscore, self.rscore - 1)
-        self.score = self.cscore + self.rscore
+        # self.rscore = sum([direct[0].score, direct[1].score])
+
+        self.score = max(self.cscore, self.rscore - 1)
+        # self.score = self.cscore + self.rscore

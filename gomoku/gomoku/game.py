@@ -20,7 +20,7 @@ class Game(object):
     def __init__(self):
         self.reset()
 
-    def move(self, where=None, depth=2, span=1, top=5):
+    def move(self, where=None, depth=3, span=2, top=3):
         if self.head.is_finished():
             return MOVE_STATE_WIN
 

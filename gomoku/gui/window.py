@@ -1,13 +1,14 @@
 # coding=utf-8
 import os
 import sys
-
+import threading
 
 from PySide2.QtWidgets import QMainWindow
 from PySide2.QtGui import QIcon
 from PySide2.QtGui import QPixmap
 from PySide2.QtWidgets import QFileDialog
 from PySide2.QtWidgets import QMessageBox
+from PySide2 import QtCore
 
 import tone
 
@@ -16,6 +17,14 @@ from . import skin
 from gomoku.game import Game
 
 logger = tone.utils.get_logger()
+
+
+class NextThread(QtCore.QThread):
+    signal = QtCore.Signal()
+
+    def run(self):
+        self.game.move()
+        self.signal.emit()
 
 
 class Window(QMainWindow):
@@ -36,6 +45,12 @@ class Window(QMainWindow):
         self.ui.save.clicked.connect(self.save)
 
         self.game = Game()
+        self.thread = NextThread()
+        self.thread.game = self.game
+        self.thread.signal.connect(
+            self.update_next_move,
+            QtCore.Qt.QueuedConnection
+        )
 
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
@@ -76,15 +91,22 @@ class Window(QMainWindow):
         return False
 
     def click(self, where):
+        if self.thread.isRunning():
+            return
+
         self.game.move(where=where)
         self.ui.label.node = self.game.head
         self.refresh()
         if self.check():
             return
 
-        self.game.move()
+        self.setCursor(QtCore.Qt.WaitCursor)
+        self.thread.start()
+
+    def update_next_move(self):
         self.ui.label.node = self.game.head
         self.refresh()
+        self.setCursor(QtCore.Qt.ArrowCursor)
         if self.check():
             return
 
