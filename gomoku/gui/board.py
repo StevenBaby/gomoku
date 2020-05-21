@@ -27,6 +27,11 @@ class Board(QLabel):
         self.labels = mat(zeros((gomoku.BOARD_WIDTH, gomoku.BOARD_HEIGHT,)), dtype=QLabel)
         self.size = 600
         self.node = node.Node()
+        self.black_image = QPixmap(skin.BLACK_IMAGE)
+        self.white_image = QPixmap(skin.WHITE_IMAGE)
+        self.black_border_image = QPixmap(skin.BLACK_BORDER_IMAGE)
+        self.white_border_image = QPixmap(skin.WHITE_BORDER_IMAGE)
+
         self.refresh()
 
     def click(self, where):
@@ -63,15 +68,23 @@ class Board(QLabel):
             label = QLabel(self)
             self.labels[pos] = label
 
-        if chess == gomoku.CHESS_BLACK:
-            image = QPixmap(skin.BLACK_IMAGE)
-        elif chess == gomoku.CHESS_WHITE:
-            image = QPixmap(skin.WHITE_IMAGE)
+        if self.node.where == (pos[1], pos[0]):
+            key = (True, chess)
+        else:
+            key = (False, chess)
+
+        images = {
+            (True, gomoku.CHESS_BLACK) : self.black_border_image,
+            (True, gomoku.CHESS_WHITE) : self.white_border_image,
+            (False, gomoku.CHESS_BLACK): self.black_image,
+            (False, gomoku.CHESS_WHITE): self.white_image
+        }
+        if key in images:
+            image = images[key]
         else:
             label.setVisible(False)
             return
 
-        # label.setStyleSheet(u"background-color: rgb(0, 170, 127);")
         label.setPixmap(image)
         label.setScaledContents(True)
         label.setGeometry(self.getChessGeometry(pos))

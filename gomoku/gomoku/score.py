@@ -77,18 +77,19 @@ class Score(object):
         },
     }
 
-    GAP = 2.1
-    LEVEL_0 = 0
-    LEVEL_1 = 1
-    LEVEL_2 = (GAP * LEVEL_1)
-    LEVEL_3 = (GAP * LEVEL_2)
-    LEVEL_4 = (GAP * LEVEL_3)
-    LEVEL_5 = (GAP * LEVEL_4)
-    LEVEL_6 = (GAP * LEVEL_5)
-    LEVEL_7 = (GAP * LEVEL_6)
-    LEVEL_8 = (GAP * LEVEL_7)
-    LEVEL_9 = (GAP * LEVEL_8)
-    LEVEL_10 = (GAP * LEVEL_9)
+    LEVEL = {
+        0: 0,
+        1: 1,
+        2: 5,
+        3: 11,
+        4: 23,
+        5: 47,
+        6: 100,
+        7: 201,
+        8: 410,
+        9: 1000,
+        10: 10000,
+    }
 
     def __init__(self, board, where):
         self.board = board
@@ -122,55 +123,59 @@ class Score(object):
                 d.empty += direct.empty
 
             if d.chess >= 5:
-                d.score = Score.LEVEL_10
+                d.score = Score.LEVEL[10]
                 continue
 
             if d.death == 2:
-                d.score = Score.LEVEL_0
+                d.score = Score.LEVEL[0]
                 continue
 
-            if d.chess == 4 and d.death == 0:
-                d.score = Score.LEVEL_9
-
-            elif d.chess == 4 and d.death == 1:
-                d.score = Score.LEVEL_8 + 1
-
-            elif d.chess == 3 and d.suffix >= 1:
-                d.score = Score.LEVEL_8
-
-            elif d.chess == 2 and d.suffix >= 2:
-                d.score = Score.LEVEL_8
-
-            elif d.chess == 1 and d.suffix >= 3:
-                d.score = Score.LEVEL_8
-
-            elif d.chess == 3 and d.death == 0:
-                d.score = Score.LEVEL_7 + 1
-
-            elif d.chess == 2 and d.suffix >= 1:
-                d.score = Score.LEVEL_7
-
-            elif d.chess == 1 and d.suffix >= 2:
-                d.score = Score.LEVEL_7
-
-            elif d.chess == 2 and d.death == 0:
-                d.score = Score.LEVEL_6
-
-            elif d.chess == 1 and d.suffix >= 1:
-                d.score = Score.LEVEL_6
-
-            elif d.chess == 3 and d.death == 1:
-                d.score = Score.LEVEL_5
-
-            elif d.chess == 2 and d.death == 1:
-                d.score = Score.LEVEL_4
-
-            elif d.chess == 1 and d.death == 0:
-                d.score = Score.LEVEL_4
-
-            elif d.chess == 1 and d.death == 1:
-                d.score = Score.LEVEL_3
-
+            if d.death == 0:
+                if d.chess == 4:
+                    d.score = Score.LEVEL[9]
+                elif d.chess == 3 and d.suffix >= 1:
+                    d.score = Score.LEVEL[8]
+                elif d.chess == 2 and d.suffix >= 2:
+                    d.score = Score.LEVEL[8]
+                elif d.chess == 1 and d.suffix >= 3:
+                    d.score = Score.LEVEL[8]
+                elif d.chess == 3:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 2 and d.suffix >= 1:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 1 and d.suffix >= 2:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 2 and d.death == 0:
+                    d.score = Score.LEVEL[6]
+                elif d.chess == 1 and d.suffix >= 1:
+                    d.score = Score.LEVEL[6]
+                elif d.chess == 1:
+                    d.score = Score.LEVEL[5]
+                else:
+                    raise Exception('score not define %s' % d)
+            elif d.death == 1:
+                if d.chess == 4:
+                    d.score = Score.LEVEL[8]
+                elif d.chess == 3 and d.suffix >= 1:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 2 and d.suffix >= 2:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 1 and d.suffix >= 3:
+                    d.score = Score.LEVEL[7]
+                elif d.chess == 3:
+                    d.score = Score.LEVEL[6]
+                elif d.chess == 2 and d.suffix >= 1:
+                    d.score = Score.LEVEL[6]
+                elif d.chess == 1 and d.suffix >= 2:
+                    d.score = Score.LEVEL[6]
+                elif d.chess == 2:
+                    d.score = Score.LEVEL[5]
+                elif d.chess == 1 and d.suffix >= 1:
+                    d.score = Score.LEVEL[5]
+                elif d.chess == 1:
+                    d.score = Score.LEVEL[4]
+                else:
+                    raise Exception('score not define %s' % d)
             if d.score == 0:
                 raise Exception('score not define %s' % d)
                 logger.error('error %s', d)
@@ -225,7 +230,7 @@ class Score(object):
         direct = self.make(self.cvalue)
         self.cscore = direct[0].score
         for var in range(1, 3):
-            if direct[var].chess > 1:
+            if direct[var].chess > 2 or direct[var].suffix > 2:
                 self.cscore += direct[1].score
                 break
 
@@ -238,11 +243,11 @@ class Score(object):
         direct = self.make(self.rvalue)
         self.rscore = direct[0].score
         for var in range(1, 3):
-            if direct[var].chess > 1:
+            if direct[var].chess > 1 or direct[var].suffix > 1:
                 self.rscore += direct[1].score
                 break
 
         # self.rscore = sum([direct[0].score, direct[1].score])
 
-        self.score = max(self.cscore, self.rscore - 1)
+        self.score = max(self.cscore, self.rscore * 0.9)
         # self.score = self.cscore + self.rscore
