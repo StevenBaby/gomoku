@@ -225,8 +225,9 @@ class Score(object):
         direct = self.make(self.cvalue)
         self.cscore = direct[0].score
         for var in range(1, 3):
-            if direct[var].chess >= 3:
+            if direct[var].chess > 1:
                 self.cscore += direct[1].score
+                break
 
         # self.cscore = sum([direct[0].score, direct[1].score])
 
@@ -237,8 +238,9 @@ class Score(object):
         direct = self.make(self.rvalue)
         self.rscore = direct[0].score
         for var in range(1, 3):
-            if direct[var].chess >= 3:
+            if direct[var].chess > 1:
                 self.rscore += direct[1].score
+                break
 
         # self.rscore = sum([direct[0].score, direct[1].score])
 

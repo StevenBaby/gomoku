@@ -24,14 +24,26 @@ logger = tone.utils.get_logger()
 
 class Node(object):
 
-    def __init__(self, board=None, where=None, turn=None, parent=None):
+    def __init__(
+        self,
+        board=None,
+        where=None,
+        turn=None,
+        parent=None,
+        depth=3,
+        span=2,
+        top=5,
+    ):
         self.where = where
         self.next = None
         self.turn = CHESS_WHITE
         self.score = None
         self.parent = None
-        self.depth = 0
+        self.height = 0
         self.Node = type(self)
+        self.depth = depth
+        self.span = span
+        self.top = top
 
         if board is not None:
             self.board = board
@@ -46,7 +58,7 @@ class Node(object):
 
         if parent:
             self.parent = parent
-            self.depth = parent.depth + 1
+            self.height = parent.height + 1
             parent.next = self
 
     def __str__(self):
@@ -81,7 +93,7 @@ class Node(object):
             return
         self.score.score = score
 
-    def move(self, where, reverse=True):
+    def move(self, where):
         if self.has_chess(where):
             return MOVE_STATE_FULL
 

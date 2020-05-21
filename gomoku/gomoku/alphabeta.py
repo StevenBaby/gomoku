@@ -15,8 +15,8 @@ class AlphaBetaNode(Node):
         self.alpha = - float('inf')
         self.beta = - self.alpha
 
-    def move(self, where, reverse=True):
-        node = super().move(where, reverse)
+    def move(self, where):
+        node = super().move(where)
         node.alpha = -self.alpha
         node.beta = -self.beta
         return node
@@ -34,7 +34,7 @@ class AlphaBetaNode(Node):
         return nodes
 
     def alphabeta(self, node, depth=2, span=2, top=5):
-        if depth == 0 or node.is_finished():
+        if depth == 0 or top == 0 or node.is_finished():
             return node.get_score()
         wheres = functions.get_search_wheres(node.board, span=span)
         nexts = self.detect_move(span=span, top=top)
@@ -42,31 +42,29 @@ class AlphaBetaNode(Node):
             if next.is_finished():
                 return - next.get_score()
             logger.debug('node %s depth %s', next, depth)
-            value = - self.alphabeta(next, depth=depth - 1, span=span)
+            value = - self.alphabeta(next, depth=depth - 1, span=span, top=top - 1)
             if value > node.alpha:
                 node.alpha = value
             if value >= node.beta:
                 return node.beta
         return node.alpha
 
-    def compute(self, node, depth=2, span=2, top=5, queue=None):
-        score = self.alphabeta(node, depth, span, top)
+    def compute(self, node, queue=None):
+        score = self.alphabeta(node, self.depth, self.span, self.top)
         logger.debug(score)
         node.set_score(score)
         queue.put(node)
 
-    def next_move_process(self, depth=2, span=2, top=5):
-        if depth == 0:
-            return None
+    def next_move_process(self):
         processes = []
-        nodes = self.detect_move(span=span, top=top)
+        nodes = self.detect_move(span=self.span, top=self.top)
         for node in nodes:
             if node.is_finished():
                 return node
             queue = multiprocessing.Queue()
             process = multiprocessing.Process(
                 target=self.compute,
-                args=(node, depth - 1, span, top, queue),
+                args=(node, queue),
             )
             process.node = node
             process.queue = queue
@@ -88,18 +86,23 @@ class AlphaBetaNode(Node):
         results = sorted(results, key=lambda e: e.get_score(), reverse=True)
         return results[0]
 
-    def next_move_sync(self, depth=2, span=2, top=5):
+    def next_move_sync(self):
         if depth == 0:
             return None
 
-        nodes = self.detect_move(span=span, top=top)
+        nodes = self.detect_move(span=self.span, top=self.top)
         for node in nodes:
             if node.is_finished():
                 return node
-            node.set_score(self.alphabeta(node, depth=depth - 1, span=span))
+            node.set_score(self.alphabeta(
+                node=node,
+                depth=self.depth,
+                span=self.span,
+                top=self.top
+            ))
 
         results = sorted(nodes, key=lambda e: e.get_score(), reverse=True)
         return results[0]
 
-    def next_move(self, depth=2, span=2, top=5):
-        return self.next_move_process(depth, span, top)
+    def next_move(self):
+        return self.next_move_process()

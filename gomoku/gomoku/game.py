@@ -20,14 +20,14 @@ class Game(object):
     def __init__(self):
         self.reset()
 
-    def move(self, where=None, depth=3, span=2, top=3):
+    def move(self, where=None):
         if self.head.is_finished():
             return MOVE_STATE_WIN
 
         if where:
             node = self.head.move(where)
         else:
-            node = self.head.next_move(depth=depth, span=span, top=top)
+            node = self.head.next_move()
         if not isinstance(node, Node):
             return node
 
@@ -39,6 +39,9 @@ class Game(object):
         return MOVE_STATE_NONE
 
     def reset(self):
+        self.depth = 3
+        self.span = 2
+        self.top = 5
         self.root = AlphaBetaNode()
         self.head = self.root
 
