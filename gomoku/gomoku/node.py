@@ -30,9 +30,9 @@ class Node(object):
         where=None,
         turn=None,
         parent=None,
-        depth=3,
+        depth=4,
         span=2,
-        top=5,
+        top=3,
     ):
         self.where = where
         self.next = None

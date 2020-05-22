@@ -45,7 +45,7 @@ def get_chess_wheres(board):
     return wheres
 
 
-def get_related_wheres(where, span=5):
+def get_related_wheres(where, span):
     from .score import Score
 
     wheres = {}
@@ -63,7 +63,7 @@ def get_related_wheres(where, span=5):
     return wheres
 
 
-def get_search_wheres(board, span=2):
+def get_search_wheres(board, span):
     wheres = get_chess_wheres(board)
     result = {}
     for where in wheres:
