@@ -18,6 +18,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
             'right': {
                 'step': (0, 1),
@@ -25,6 +26,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
         },
         'vertical': {
@@ -34,6 +36,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
             'lower': {
                 'step': (1, 0),
@@ -41,6 +44,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
         },
         'principal': {
@@ -50,6 +54,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
             'lowerright': {
                 'step': (1, 1),
@@ -57,6 +62,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
         },
         'counter': {
@@ -66,6 +72,7 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
             'upperright': {
                 'step': (-1, 1),
@@ -73,22 +80,22 @@ class Score(object):
                 'empty': 0,
                 'suffix': 0,
                 'death': 0,
+                'block': 0,
             },
         },
     }
 
     LEVEL = {
         0: 0,
-        1: 1,
-        2: 5,
-        3: 11,
-        4: 23,
-        5: 47,
-        6: 100,
-        7: 201,
-        8: 410,
-        9: 1000,
-        10: 10000,
+        1: 10000,
+        2: 5000,
+        3: 2500,
+        4: 1250,
+        5: 625,
+        6: 312,
+        7: 156,
+        8: 78,
+        9: 39,
     }
 
     def __init__(self, board, where):
@@ -102,7 +109,67 @@ class Score(object):
         self.score = 0
         self.compute()
 
-    def make(self, value):
+    def make_score(self, directions):
+        LEVEL = self.LEVEL
+        for d in directions:
+            if d.chess >= 5:
+                d.score = LEVEL[1]
+                continue
+            if d.death == 2:
+                d.score = LEVEL[0]
+                continue
+            if d.chess >= 4 and d.death == 0:
+                d.score = LEVEL[2]
+                continue
+
+            state = (d.chess, d.death, d.suffix, d.block)
+
+            SCORES = {
+                (4, 1, None, None): LEVEL[3],
+                (3, 0, 1, 0): LEVEL[3] + 1,
+                (2, 0, 2, 0): LEVEL[3] + 1,
+                (1, 0, 3, 0): LEVEL[3] + 1,
+                (3, 0, 1, 1): LEVEL[3],
+                (2, 0, 2, 1): LEVEL[3],
+                (1, 0, 3, 1): LEVEL[3],
+                (3, 0, None, None): LEVEL[3],
+                (3, 1, None, None): LEVEL[4],
+                (2, 0, 1, 0): LEVEL[3],
+                (1, 0, 2, 0): LEVEL[3],
+                (2, 0, 1, 1): LEVEL[4],
+                (1, 0, 2, 1): LEVEL[4],
+                (2, 0, None, None): LEVEL[4],
+                (2, 1, None, None): LEVEL[5],
+                (1, 0, 1, 0): LEVEL[4],
+                (1, 0, 1, 1): LEVEL[5],
+                (1, 0, None, None): LEVEL[6],
+                (1, 1, None, None): LEVEL[7],
+            }
+            if state in SCORES:
+                d.score = SCORES[state]
+            else:
+                for state, score in SCORES.items():
+                    chess, death, suffix, block = state
+                    if chess != d.chess:
+                        continue
+                    if death != d.death:
+                        continue
+                    if (suffix, block) == (None, None):
+                        d.score = score
+                        break
+            if d.score == 0:
+                raise Exception('score not define %s' % d)
+                logger.error('error %s', d)
+
+            # if d.empty:
+            #     d.score += 1
+            # if name in ('principal', "counter"):
+            #     d.score += 1
+
+        direct = sorted(directions, key=lambda e: e.score, reverse=True)
+        return direct
+
+    def make_directions(self, value):
         directions = []
 
         for name, total in value.items():
@@ -113,6 +180,7 @@ class Score(object):
             d.death = 0
             d.empty = 0
             d.suffix = 0
+            d.block = 0
             d.score = 0
 
             for _, direct in total.items():
@@ -121,72 +189,13 @@ class Score(object):
                 d.chess += direct.chess
                 d.death += direct.death
                 d.empty += direct.empty
+                d.block += direct.block
 
-            if d.chess >= 5:
-                d.score = Score.LEVEL[10]
-                continue
+        return directions
 
-            if d.death == 2:
-                d.score = Score.LEVEL[0]
-                continue
-
-            if d.death == 0:
-                if d.chess == 4:
-                    d.score = Score.LEVEL[9]
-                elif d.chess == 3 and d.suffix >= 1:
-                    d.score = Score.LEVEL[8]
-                elif d.chess == 2 and d.suffix >= 2:
-                    d.score = Score.LEVEL[8]
-                elif d.chess == 1 and d.suffix >= 3:
-                    d.score = Score.LEVEL[8]
-                elif d.chess == 3:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 2 and d.suffix >= 1:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 1 and d.suffix >= 2:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 2 and d.death == 0:
-                    d.score = Score.LEVEL[6]
-                elif d.chess == 1 and d.suffix >= 1:
-                    d.score = Score.LEVEL[6]
-                elif d.chess == 1:
-                    d.score = Score.LEVEL[5]
-                else:
-                    raise Exception('score not define %s' % d)
-            elif d.death == 1:
-                if d.chess == 4:
-                    d.score = Score.LEVEL[8]
-                elif d.chess == 3 and d.suffix >= 1:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 2 and d.suffix >= 2:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 1 and d.suffix >= 3:
-                    d.score = Score.LEVEL[7]
-                elif d.chess == 3:
-                    d.score = Score.LEVEL[6]
-                elif d.chess == 2 and d.suffix >= 1:
-                    d.score = Score.LEVEL[6]
-                elif d.chess == 1 and d.suffix >= 2:
-                    d.score = Score.LEVEL[6]
-                elif d.chess == 2:
-                    d.score = Score.LEVEL[5]
-                elif d.chess == 1 and d.suffix >= 1:
-                    d.score = Score.LEVEL[5]
-                elif d.chess == 1:
-                    d.score = Score.LEVEL[4]
-                else:
-                    raise Exception('score not define %s' % d)
-            if d.score == 0:
-                raise Exception('score not define %s' % d)
-                logger.error('error %s', d)
-
-            if d.empty:
-                d.score += 1
-            # if name in ('principal', "counter"):
-            #     d.score += 1
-
-        direct = sorted(directions, key=lambda e: e.score, reverse=True)
-        return direct
+    def make(self, value):
+        directions = self.make_directions(value)
+        return self.make_score(directions)
 
     def collect(self, value, reverse=False):
         board = self.board
@@ -202,7 +211,7 @@ class Score(object):
                 direct = total[direct_name]
                 x, y = direct.step
 
-                for step in range(0, 5):
+                for step in range(0, 6):
                     move = (where[0] + step * x, where[1] + step * y)
                     if not functions.is_valid_where(move):
                         direct.death += 1
@@ -210,20 +219,21 @@ class Score(object):
                     chess = board[move]
                     if reverse and move == self.where:
                         chess *= -1
-                    if chess == turn and direct.empty == 1:
-                        direct.suffix += 1
-                        continue
+                    if chess not in (turn, CHESS_EMPTY) and direct.empty == 0:
+                        direct.death += 1
+                        break
+                    if chess not in (turn, CHESS_EMPTY) and direct.empty != 0:
+                        direct.block += 1
+                        break
                     if chess == turn and direct.empty == 0:
                         direct.chess += 1
+                        continue
+                    if chess == turn and direct.empty == 1:
+                        direct.suffix += 1
                         continue
                     if chess == CHESS_EMPTY and direct.empty < 2 and direct.suffix == 0:
                         direct.empty += 1
                         continue
-                    if chess != turn and direct.empty == 0:
-                        direct.death += 1
-                        break
-                    if chess != turn and direct.empty == 1:
-                        break
 
     def compute(self):
         self.collect(self.cvalue, reverse=False)

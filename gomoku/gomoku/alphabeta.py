@@ -41,7 +41,7 @@ class AlphaBetaNode(Node):
         for next in nexts:
             if next.is_finished():
                 return - next.get_score()
-            logger.debug('node %s depth %s', next, depth)
+            # logger.debug('node %s depth %s', next, depth)
             value = - self.alphabeta(next, depth=depth - 1, span=span, top=top - 1)
             if value > node.alpha:
                 node.alpha = value
