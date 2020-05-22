@@ -84,7 +84,8 @@ class AlphaBetaNode(Node):
             logger.debug('join process')
 
         results = sorted(results, key=lambda e: e.get_score(), reverse=True)
-        return results[0]
+        node = results[0]
+        return node
 
     def next_move_sync(self):
         if depth == 0:

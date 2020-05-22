@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import tone
+from tone.utils.attrdict import attrdict
 
 from . import BOARD_WIDTH
 from . import BOARD_HEIGHT
@@ -48,7 +49,7 @@ def get_related_wheres(where, span=5):
     from .score import Score
 
     wheres = {}
-    iterate = tone.utils.attrdict.attrdict.loads(Score.PARAMS)
+    iterate = attrdict.loads(Score.params)
     for _, total in iterate.items():
         for _, direct in total.items():
             x, y = direct.step
