@@ -17,6 +17,7 @@ logger = tone.utils.get_logger()
 class Game(object):
 
     def __init__(self):
+        self.root = None
         self.reset()
 
     def move(self, where=None):
@@ -41,7 +42,8 @@ class Game(object):
         self.depth = 3
         self.span = 2
         self.top = 5
-        self.root = AlphaZeroNode()
+        if self.root is None:
+            self.root = AlphaZeroNode.load()
         self.head = self.root
 
     def undo(self):

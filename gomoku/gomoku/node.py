@@ -1,4 +1,5 @@
 # coding=utf-8
+import os
 import random
 
 import numpy as np
@@ -22,7 +23,12 @@ from . import functions
 logger = tone.utils.get_logger()
 
 
+dirname = os.path.abspath(os.path.join(__file__, '../..'))
+
+
 class Node(object):
+
+    filename = os.path.join(dirname, 'node.db')
 
     def __init__(
         self,
@@ -136,3 +142,20 @@ class Node(object):
         self.children[where] = node
 
         return node
+
+    def save(self):
+        import pickle
+        with open(self.filename, 'wb') as file:
+            pickle.dump(self, file)
+
+    @classmethod
+    def load(cls):
+        import pickle
+        try:
+            with open(cls.filename, 'rb') as file:
+                model = pickle.load(file)
+        except Exception:
+            return cls()
+        if not isinstance(model, cls):
+            return cls()
+        return model

@@ -72,6 +72,7 @@ class Window(QMainWindow):
             QMessageBox.No)
 
         if reply == QMessageBox.Yes:
+            self.game.root.save()
             event.accept()
         else:
             event.accept()
