@@ -30,9 +30,9 @@ class Node(object):
         where=None,
         turn=None,
         parent=None,
-        depth=4,
+        depth=6,
         span=2,
-        top=3,
+        top=5,
     ):
         self.where = where
         self.next = None
@@ -45,6 +45,7 @@ class Node(object):
         self.span = span
         self.top = top
         self.children = {}
+        self.searched = {}
 
         if board is not None:
             self.board = board
@@ -117,6 +118,10 @@ class Node(object):
 
         if self.is_finished():
             return MOVE_STATE_WIN
+
+        if where in self.children:
+            node = self.children[where]
+            return node
 
         board = self.board.copy()
         turn = self.turn * -1

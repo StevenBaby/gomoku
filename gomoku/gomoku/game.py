@@ -30,7 +30,7 @@ class Game(object):
         if not isinstance(node, Node):
             return node
 
-        logger.debug("{:0.2f} - {}".format(node.score.score, node.score.finished))
+        # logger.debug("{:0.2f} - {}".format(node.score.score, node.score.finished))
 
         self.head = node
         if self.head.is_finished():

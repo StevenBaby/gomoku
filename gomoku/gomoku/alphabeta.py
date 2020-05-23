@@ -25,9 +25,9 @@ class AlphaBetaNode(Node):
     def alphabeta(self, node, depth, span, top):
         if depth == 0 or top == 0 or node.is_finished():
             return node.get_score()
-        wheres = functions.get_search_wheres(node.board, span=span)
-        nexts = self.detect_move(span=span, top=top)
+        nexts = node.detect_move(span=span, top=top)
         for next in nexts:
+            node.searched[next.where] = next
             if next.is_finished():
                 return - next.get_score()
             # logger.debug('node %s depth %s', next, depth)
@@ -85,6 +85,7 @@ class AlphaBetaNode(Node):
         if not nodes:
             return MOVE_STATE_NONE
         for node in nodes:
+            self.searched[node.where] = node
             if node.is_finished():
                 return node
             node.set_score(self.alphabeta(
@@ -95,7 +96,8 @@ class AlphaBetaNode(Node):
             ))
 
         results = sorted(nodes, key=lambda e: e.get_score(), reverse=True)
-        return results[0]
+        node = results[0]
+        return node
 
     def next_move(self):
         return self.next_move_sync()
