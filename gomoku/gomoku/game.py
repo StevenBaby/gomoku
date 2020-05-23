@@ -35,7 +35,6 @@ class Game(object):
         self.head = node
         if self.head.is_finished():
             return MOVE_STATE_WIN
-        return MOVE_STATE_NONE
 
     def reset(self):
         from .alphazero import AlphaZeroNode

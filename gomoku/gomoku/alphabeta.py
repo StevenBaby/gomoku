@@ -18,6 +18,8 @@ class AlphaBetaNode(Node):
 
     def move(self, where):
         node = super().move(where)
+        if not isinstance(node, Node):
+            return
         node.alpha = -self.alpha
         node.beta = -self.beta
         return node

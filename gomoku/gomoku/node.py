@@ -101,6 +101,10 @@ class Node(object):
             nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
             return nodes
 
+        if self.where is None:
+            node = self.move(where=(9, 9))
+            return [node]
+
         nodes = []
         wheres = functions.get_search_wheres(self.board, span=span)
         for where in wheres:

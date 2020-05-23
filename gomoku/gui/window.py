@@ -48,6 +48,8 @@ class Window(QMainWindow):
         self.ui.undo.clicked.connect(self.undo)
         self.ui.load.clicked.connect(self.load)
         self.ui.save.clicked.connect(self.save)
+        self.ui.hint.clicked.connect(self.hint)
+        self.ui.reverse.clicked.connect(self.reverse)
 
         self.game = Game()
         self.thread = ComputeThread(self)
@@ -55,6 +57,8 @@ class Window(QMainWindow):
             self.post_compute,
             QtCore.Qt.QueuedConnection
         )
+
+        self.hinting = False
 
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
@@ -78,7 +82,7 @@ class Window(QMainWindow):
         if chess == gomoku.CHESS_WHITE:
             text = skin.LABEL_STYLE.format(text="black")
         elif chess == gomoku.CHESS_BLACK:
-            text = skin.LABEL_STYLE.format(text="black")
+            text = skin.LABEL_STYLE.format(text="white")
         self.ui.chess.setText(text)
         self.ui.label.refresh()
 
@@ -106,6 +110,8 @@ class Window(QMainWindow):
     def compute(self):
         self.setCursor(QtCore.Qt.WaitCursor)
         self.thread.start()
+        # self.game.move()
+        # self.post_compute()
 
     def post_compute(self):
         self.ui.label.node = self.game.head
@@ -113,6 +119,16 @@ class Window(QMainWindow):
         self.setCursor(QtCore.Qt.ArrowCursor)
         if self.check():
             return
+        if self.hinting:
+            self.hinting = False
+            self.compute()
+
+    def hint(self):
+        self.hinting = True
+        self.compute()
+
+    def reverse(self):
+        self.compute()
 
     def reset(self):
         self.game.reset()

@@ -90,6 +90,18 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.chess)
 
+        self.reverse = QPushButton(self.controller)
+        self.reverse.setObjectName(u"reverse")
+        self.reverse.setMinimumSize(QSize(0, 45))
+
+        self.verticalLayout.addWidget(self.reverse)
+
+        self.hint = QPushButton(self.controller)
+        self.hint.setObjectName(u"hint")
+        self.hint.setMinimumSize(QSize(0, 45))
+
+        self.verticalLayout.addWidget(self.hint)
+
         self.reset = QPushButton(self.controller)
         self.reset.setObjectName(u"reset")
         self.reset.setMinimumSize(QSize(0, 45))
@@ -128,6 +140,8 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Gomoku", None))
         self.label.setText("")
         self.chess.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">black</span></p></body></html>", None))
+        self.reverse.setText(QCoreApplication.translate("MainWindow", u"Reverse", None))
+        self.hint.setText(QCoreApplication.translate("MainWindow", u"Hint", None))
         self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
         self.undo.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
         self.load.setText(QCoreApplication.translate("MainWindow", u"Load", None))
