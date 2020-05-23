@@ -47,10 +47,10 @@ class Game(object):
     def undo(self):
         if self.head == self.root:
             return None
-        if self.head.turn == CHESS_BLACK:
+        if self.head.parent:
             self.head = self.head.parent
-        else:
-            self.head = self.head.parent.parent
+        if self.head.parent:
+            self.head = self.head.parent
 
     def save(self, filename):
         import pickle
