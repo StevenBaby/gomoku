@@ -59,7 +59,28 @@ class Window(QMainWindow):
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
 
-    def
+    def closeEvent(self, event):
+        reply = QMessageBox.question(
+            self,
+            'Message',
+            "Do you want to save trained models?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.accept()
+
+    def refresh(self):
+        import gomoku
+        chess = self.game.head.turn
+        if chess == gomoku.CHESS_WHITE:
+            text = skin.LABEL_STYLE.format(text="black")
+        elif chess == gomoku.CHESS_BLACK:
+            text = skin.LABEL_STYLE.format(text="black")
+        self.ui.chess.setText(text)
+        self.ui.label.refresh()
 
     def refresh(self):
         import gomoku

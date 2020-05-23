@@ -21,3 +21,15 @@ BLACK_IMAGE = os.path.join(SKINSPATH, 'black.png')
 WHITE_IMAGE = os.path.join(SKINSPATH, 'white.png')
 BLACK_BORDER_IMAGE = os.path.join(SKINSPATH, 'black_border.png')
 WHITE_BORDER_IMAGE = os.path.join(SKINSPATH, 'white_border.png')
+
+LABEL_STYLE = '''
+<html>
+<body>
+<p align="center">
+    <span style=" font-size:14pt; font-weight:600;">
+        {text}
+    </span>
+</p>
+</body>
+</html>
+'''
