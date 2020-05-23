@@ -22,18 +22,6 @@ class AlphaBetaNode(Node):
         node.beta = -self.beta
         return node
 
-    def detect_move(self, span, top):
-        nodes = []
-        wheres = functions.get_search_wheres(self.board, span=span)
-        for where in wheres:
-            node = self.move(where)
-            if not isinstance(node, Node):
-                continue
-            nodes.append(node)
-
-        nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
-        return nodes
-
     def alphabeta(self, node, depth, span, top):
         if depth == 0 or top == 0 or node.is_finished():
             return node.get_score()

@@ -44,6 +44,7 @@ class Node(object):
         self.depth = depth
         self.span = span
         self.top = top
+        self.children = {}
 
         if board is not None:
             self.board = board
@@ -93,6 +94,23 @@ class Node(object):
             return
         self.score.score = score
 
+    def detect_move(self, span, top):
+        if self.children:
+            nodes = self.children.values()
+            nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
+            return nodes
+
+        nodes = []
+        wheres = functions.get_search_wheres(self.board, span=span)
+        for where in wheres:
+            node = self.move(where)
+            if not isinstance(node, Node):
+                continue
+            nodes.append(node)
+
+        nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
+        return nodes
+
     def move(self, where):
         if self.has_chess(where):
             return MOVE_STATE_FULL
@@ -105,4 +123,7 @@ class Node(object):
 
         board[where] = turn
         node = self.Node(board=board, turn=turn, where=where, parent=self)
+
+        self.children[where] = node
+
         return node
