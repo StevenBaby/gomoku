@@ -3,7 +3,6 @@
 import tone
 
 from .node import Node
-from .alphabeta import AlphaBetaNode
 
 from . import MOVE_STATE_FULL
 from . import MOVE_STATE_WIN
@@ -39,10 +38,11 @@ class Game(object):
         return MOVE_STATE_NONE
 
     def reset(self):
+        from .alphazero import AlphaZeroNode
         self.depth = 3
         self.span = 2
         self.top = 5
-        self.root = AlphaBetaNode()
+        self.root = AlphaZeroNode()
         self.head = self.root
 
     def undo(self):
