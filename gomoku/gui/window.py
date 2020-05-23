@@ -82,32 +82,6 @@ class Window(QMainWindow):
         self.ui.chess.setText(text)
         self.ui.label.refresh()
 
-    def refresh(self):
-        import gomoku
-        chess = self.game.head.turn
-        if chess == gomoku.CHESS_WHITE:
-            text = '''<html>
-                    <body>
-                        <p align="center">
-                            <span style=" font-size:14pt; font-weight:600;">
-                                black
-                            </span>
-                        </p>
-                    </body>
-                    </html>'''
-        elif chess == gomoku.CHESS_BLACK:
-            text = '''<html>
-                    <body>
-                        <p align="center">
-                            <span style=" font-size:14pt; font-weight:600;">
-                                white
-                            </span>
-                        </p>
-                    </body>
-                    </html>'''
-        self.ui.chess.setText(text)
-        self.ui.label.refresh()
-
     def check(self):
         if self.game.head.score.finished:
             if self.game.head.turn == gomoku.CHESS_BLACK:
