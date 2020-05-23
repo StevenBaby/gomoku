@@ -19,11 +19,16 @@ from gomoku.game import Game
 logger = tone.utils.get_logger()
 
 
-class NextThread(QtCore.QThread):
+class ComputeThread(QtCore.QThread):
+
     signal = QtCore.Signal()
 
+    def __init__(self, window):
+        super().__init__()
+        self.window = window
+
     def run(self):
-        self.game.move()
+        self.window.game.move()
         self.signal.emit()
 
 
@@ -45,15 +50,16 @@ class Window(QMainWindow):
         self.ui.save.clicked.connect(self.save)
 
         self.game = Game()
-        self.thread = NextThread()
-        self.thread.game = self.game
+        self.thread = ComputeThread(self)
         self.thread.signal.connect(
-            self.update_next_move,
+            self.post_compute,
             QtCore.Qt.QueuedConnection
         )
 
     def resizeEvent(self, event):
         self.ui.label.resizeEvent(event)
+
+    def
 
     def refresh(self):
         import gomoku
@@ -100,10 +106,13 @@ class Window(QMainWindow):
         if self.check():
             return
 
+        self.compute()
+
+    def compute(self):
         self.setCursor(QtCore.Qt.WaitCursor)
         self.thread.start()
 
-    def update_next_move(self):
+    def post_compute(self):
         self.ui.label.node = self.game.head
         self.refresh()
         self.setCursor(QtCore.Qt.ArrowCursor)
