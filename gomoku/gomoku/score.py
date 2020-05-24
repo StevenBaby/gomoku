@@ -20,7 +20,7 @@ class Direct(object):
 
         if chess >= 5:
             self.finished = True
-            return float('inf')
+            return 100000
         if death == 2:
             return 0
         if (chess, death) == (4, 0):
@@ -164,10 +164,12 @@ class Score(object):
         direct = self.make(self.cvalue)
         if any([var.finished for var in direct]):
             self.finished = True
-            self.score = float('inf')
-            return
 
+        # self.cscore = direct[0].score
         self.cscore = direct[0].score + direct[1].score
+
+        self.score = self.cscore
+        return
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)

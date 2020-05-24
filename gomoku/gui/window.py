@@ -64,6 +64,8 @@ class Window(QMainWindow):
         self.ui.label.resizeEvent(event)
 
     def closeEvent(self, event):
+        return super().closeEvent(event)
+
         reply = QMessageBox.question(
             self,
             'Message',
@@ -72,7 +74,6 @@ class Window(QMainWindow):
             QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            self.game.root.save()
             event.accept()
         else:
             event.accept()
@@ -110,9 +111,9 @@ class Window(QMainWindow):
 
     def compute(self):
         self.setCursor(QtCore.Qt.WaitCursor)
-        self.thread.start()
-        # self.game.move()
-        # self.post_compute()
+        # self.thread.start()
+        self.game.move()
+        self.post_compute()
 
     def post_compute(self):
         self.ui.label.node = self.game.head

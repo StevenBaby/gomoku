@@ -38,12 +38,15 @@ class Game(object):
             return MOVE_STATE_WIN
 
     def reset(self):
-        from .alphazero import AlphaZeroNode
-        self.depth = 3
-        self.span = 2
-        self.top = 5
-        if self.root is None:
-            self.root = AlphaZeroNode.load()
+        from .minmax import MinMaxNode as Node
+
+        self.depth = 1
+        self.span = 1
+        self.top = 1000
+        self.root = Node(
+            depth=self.depth,
+            span=self.span,
+            top=self.top)
         self.head = self.root
 
     def undo(self):
@@ -55,17 +58,12 @@ class Game(object):
             self.head = self.head.parent
 
     def save(self, filename):
-        import pickle
-        with open(filename, 'wb') as file:
-            pickle.dump(self, file)
+        from . import functions
+        functions.save_pickle(self, filename)
 
     def load(self, filename):
-        import pickle
-        try:
-            with open(filename, 'rb') as file:
-                model = pickle.load(file)
-        except Exception:
-            return False
+        from . import functions
+        model = functions.load_pickle(filename)
         if not isinstance(model, Game):
             return False
 

@@ -73,3 +73,19 @@ def get_search_wheres(board, span):
                 continue
             result[var] = True
     return result
+
+
+def save_pickle(data, filename):
+    import pickle
+    with open(filename, 'wb') as file:
+        pickle.dump(self, file)
+
+
+def load_pickle(filename):
+    import pickle
+    try:
+        with open(filename, 'rb') as file:
+            model = pickle.load(file)
+    except Exception:
+        return None
+    return model

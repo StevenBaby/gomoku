@@ -36,22 +36,21 @@ class Node(object):
         where=None,
         turn=None,
         parent=None,
-        depth=6,
+        depth=3,
         span=2,
         top=5,
     ):
         self.where = where
         self.next = None
         self.turn = CHESS_WHITE
-        self.score = None
+        self.score = None  # current score of compute
+        self._score = None  # number of evaluated
         self.parent = None
         self.height = 0
         self.Node = type(self)
         self.depth = depth
         self.span = span
         self.top = top
-        self.children = {}
-        self.searched = {}
 
         if board is not None:
             self.board = board
@@ -91,22 +90,20 @@ class Node(object):
     def has_chess(self, where):
         return self.board[where] != CHESS_EMPTY
 
+    def __lt__(self, other):
+        return self.get_score() < other.get_score()
+
     def get_score(self):
+        if self._score is not None:
+            return self._score
         if not self.score:
             return 0
-        return self.score.score
+        return self.score.score * self.turn * -1
 
     def set_score(self, score):
-        if not self.score:
-            return
-        self.score.score = score
+        self._score = score
 
     def detect_move(self, span, top):
-        if self.children:
-            nodes = self.children.values()
-            nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
-            return nodes
-
         if self.where is None:
             node = self.move(where=(9, 9))
             return [node]
@@ -119,7 +116,12 @@ class Node(object):
                 continue
             nodes.append(node)
 
-        nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=True)[:top]
+        if self.turn == CHESS_BLACK:
+            reverse = True
+        else:
+            reverse = False
+
+        nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=reverse)[:top]
         return nodes
 
     def move(self, where):
@@ -129,33 +131,30 @@ class Node(object):
         if self.is_finished():
             return MOVE_STATE_WIN
 
-        if where in self.children:
-            node = self.children[where]
-            return node
-
         board = self.board.copy()
         turn = self.turn * -1
 
         board[where] = turn
-        node = self.Node(board=board, turn=turn, where=where, parent=self)
-
-        self.children[where] = node
+        node = self.Node(
+            board=board, turn=turn, where=where, parent=self,
+            depth=self.depth, span=self.span, top=self.top)
 
         return node
 
-    def save(self):
-        import pickle
-        with open(self.filename, 'wb') as file:
-            pickle.dump(self, file)
+    def next_move(self):
+        nodes = self.detect_move(span=self.span, top=self.top)
+        if not nodes:
+            return MOVE_STATE_NONE
+        for node in nodes:
+            if node.is_finished():
+                return node
+            node.set_score(self.evaluate(node))
 
-    @classmethod
-    def load(cls):
-        import pickle
-        try:
-            with open(cls.filename, 'rb') as file:
-                model = pickle.load(file)
-        except Exception:
-            return cls()
-        if not isinstance(model, cls):
-            return cls()
-        return model
+        if self.turn == CHESS_WHITE:
+            node = min(nodes)
+        else:
+            node = max(nodes)
+        return node
+
+    def evaluate(self, node):
+        return node.get_score()
