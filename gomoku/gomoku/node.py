@@ -116,12 +116,7 @@ class Node(object):
                 continue
             nodes.append(node)
 
-        if self.turn == CHESS_BLACK:
-            reverse = True
-        else:
-            reverse = False
-
-        nodes = sorted(nodes, key=lambda e: e.get_score(), reverse=reverse)[:top]
+        nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)[:top]
         return nodes
 
     def move(self, where):
@@ -150,13 +145,15 @@ class Node(object):
                 return node
             value = node.evaluate()
             node.set_score(value)
-        return self.select_node(nodes)
+        node = self.select(nodes)
+        logger.debug(node)
+        return node
 
-    def select_node(self, nodes):
-        if self.turn == CHESS_WHITE:
-            node = min(nodes)
-        else:
+    def select(self, nodes):
+        if self.turn == CHESS_BLACK:
             node = max(nodes)
+        else:
+            node = min(nodes)
         return node
 
     def evaluate(self):

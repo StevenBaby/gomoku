@@ -4,46 +4,45 @@ import tone
 from .node import Node
 from . import functions
 from . import MOVE_STATE_NONE
-from . import CHESS_WHITE
+from .minmax import MIN, MAX
 
 logger = tone.utils.get_logger()
 
 
 class AlphaBetaNode(Node):
 
-    def alphabeta(self, node, alpha, beta, depth):
-        if depth == 0 or node.gameover():
-            return node.get_score()
+    def alphabeta(self, alpha, beta, depth):
+        if depth == 0 or self.gameover():
+            return self.get_score()
 
-        nexts = node.detect_move(span=self.span, top=self.top)
-        for next in nexts:
-            if next.gameover():
-                return - next.get_score()
+        nexts = self.detect_move(span=self.span, top=self.top)
+        if not nexts:
+            return self.get_score()
 
-            value = self.alphabeta(next, alpha, beta, depth - 1)
-            # logger.debug('node %s depth %s value %s', next, depth, value)
+        for var in nexts:
+            if var.gameover():
+                return var.get_score()
 
-            if node.turn == CHESS_WHITE:
-                beta = min(beta, value)
-            else:
+            value = var.alphabeta(alpha, beta, depth - 1)
+            if self.turn == MIN:
                 alpha = max(alpha, value)
+            else:
+                beta = min(beta, value)
+
             if beta <= alpha:
-                logger.debug("pruned depth %s", depth)
+                logger.debug('pruning')
                 break
 
-        if node.turn == CHESS_WHITE:
-            return beta
-        else:
+        if self.turn == MIN:
             return alpha
+        else:
+            return beta
 
-    def evaluate(self, node):
-        alpha = float("inf")
-        if node.turn == CHESS_WHITE:
-            alpha = -float('inf')
-        beta = -alpha
+    def evaluate(self):
+        alpha = -float("inf")
+        beta = float("inf")
 
         return self.alphabeta(
-            node=node,
             alpha=alpha,
             beta=beta,
             depth=self.depth)

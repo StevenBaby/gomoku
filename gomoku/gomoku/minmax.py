@@ -22,18 +22,14 @@ class MinMaxNode(Node):
         if not nexts:
             return self.get_score()
 
-        if self.turn == MIN:
-            current = -float("inf")
-        else:
-            current = float('inf')
-
         for var in nexts:
-            value = var.minmax(depth - 1)
-            if var.turn == MAX and value > current:
-                current = value
-            elif var.turn == MIN and value < current:
-                current = value
-        return current
+            if var.gameover():
+                return var.get_score()
+            var.set_score(
+                var.minmax(depth - 1)
+            )
+
+        return self.select(nexts).get_score()
 
     def evaluate(self):
         return self.minmax(depth=self.depth)

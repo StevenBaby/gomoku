@@ -169,8 +169,8 @@ class Score(object):
         # self.cscore = direct[0].score
         self.cscore = direct[0].score + direct[1].score
 
-        # self.score = self.cscore
-        # return
+        self.score = self.cscore
+        return
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)
