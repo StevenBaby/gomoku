@@ -30,7 +30,7 @@ class AlphaBetaNode(Node):
                 beta = min(beta, value)
 
             if beta <= alpha:
-                logger.debug('pruning')
+                # logger.debug('pruning')
                 break
 
         if self.turn == MIN:

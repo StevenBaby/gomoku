@@ -39,7 +39,7 @@ class Game(object):
 
     def reset(self):
         from .minmax import MinMaxNode as Node
-        # from .alphabeta import AlphaBetaNode as Node
+        from .alphabeta import AlphaBetaNode as Node
 
         self.depth = DEPTH_DEFAULT
         self.span = SPAN_DEFAULT
