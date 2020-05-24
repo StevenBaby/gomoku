@@ -116,7 +116,8 @@ class Node(object):
                 continue
             nodes.append(node)
 
-        nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)[:top]
+        # nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)[:top]
+        nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)
         return nodes
 
     def move(self, where):

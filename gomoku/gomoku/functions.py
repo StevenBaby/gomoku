@@ -78,7 +78,7 @@ def get_search_wheres(board, span):
 def save_pickle(data, filename):
     import pickle
     with open(filename, 'wb') as file:
-        pickle.dump(self, file)
+        pickle.dump(data, file)
 
 
 def load_pickle(filename):

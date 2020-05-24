@@ -18,18 +18,20 @@ class MinMaxNode(Node):
         if depth == 0 or self.gameover():
             return self.get_score()
 
-        nexts = self.detect_move(span=self.span, top=self.top)
-        if not nexts:
+        children = self.detect_move(span=self.span, top=self.top)
+        if not children:
             return self.get_score()
 
-        for var in nexts:
-            if var.gameover():
-                return var.get_score()
-            var.set_score(
-                var.minmax(depth - 1)
-            )
+        current = self.get_score()
 
-        return self.select(nexts).get_score()
+        for var in children:
+            value = var.minmax(depth - 1)
+            if self.turn == MIN:
+                current = max(value, current)
+            else:
+                current = min(value, current)
+        return current
 
     def evaluate(self):
-        return self.minmax(depth=self.depth)
+        value = self.minmax(depth=self.depth)
+        return value

@@ -9,7 +9,9 @@ from . import MOVE_STATE_WIN
 from . import MOVE_STATE_NONE
 from . import CHESS_BLACK
 from . import CHESS_WHITE
-
+from . import DEPTH_DEFAULT
+from . import SPAN_DEFAULT
+from . import TOP_DEFAULT
 
 logger = tone.utils.get_logger()
 
@@ -37,11 +39,11 @@ class Game(object):
 
     def reset(self):
         from .minmax import MinMaxNode as Node
-        from .alphabeta import AlphaBetaNode as Node
+        # from .alphabeta import AlphaBetaNode as Node
 
-        self.depth = 1
-        self.span = 1
-        self.top = 10
+        self.depth = DEPTH_DEFAULT
+        self.span = SPAN_DEFAULT
+        self.top = TOP_DEFAULT
         self.root = Node(
             depth=self.depth,
             span=self.span,
