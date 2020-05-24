@@ -170,11 +170,10 @@ class Score(object):
         self.cscore = direct[0].score + direct[1].score
 
         self.score = self.cscore
-        return
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)
         self.rvalue.direct = direct
         self.rscore = direct[0].score + direct[1].score
-        self.score = max(self.cscore, self.rscore - 1)
+        # self.score = max(self.cscore, self.rscore - 1)
         # self.score = self.cscore + self.rscore

@@ -69,7 +69,7 @@ class Node(object):
             parent.next = self
 
     def __str__(self):
-        return f'{self.where} - {self.turn_name()} - {self.get_score():0.2f}'
+        return f'{self.where} - {self.turn_name()} - [{self.get_score():0.1f}]'
 
     def __repr__(self):
         return self.__str__()
@@ -116,9 +116,10 @@ class Node(object):
                 continue
             nodes.append(node)
 
-        # nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)[:top]
-        nodes = sorted(nodes, key=lambda e: abs(e.get_score()), reverse=True)
-        return nodes
+        cnodes = sorted(nodes, key=lambda e: e.score.cscore, reverse=True)[:top]
+        rnodes = sorted(nodes, key=lambda e: e.score.rscore, reverse=True)[:top]
+        result = cnodes + rnodes
+        return result
 
     def move(self, where):
         if self.has_chess(where):
