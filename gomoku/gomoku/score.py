@@ -162,6 +162,7 @@ class Score(object):
     def compute(self):
         self.collect(self.cvalue, reverse=False)
         direct = self.make(self.cvalue)
+        self.cvalue.direct = direct
         if any([var.finished for var in direct]):
             self.finished = True
 
@@ -173,6 +174,7 @@ class Score(object):
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)
+        self.rvalue.direct = direct
         self.rscore = direct[0].score + direct[1].score
         self.score = max(self.cscore, self.rscore - 1)
         # self.score = self.cscore + self.rscore

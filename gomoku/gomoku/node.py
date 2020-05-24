@@ -36,9 +36,9 @@ class Node(object):
         where=None,
         turn=None,
         parent=None,
-        depth=3,
-        span=2,
-        top=5,
+        depth=None,
+        span=None,
+        top=None,
     ):
         self.where = where
         self.next = None
@@ -149,7 +149,9 @@ class Node(object):
             if node.is_finished():
                 return node
             node.set_score(self.evaluate(node))
+        return self.select_node(nodes)
 
+    def select_node(self, nodes):
         if self.turn == CHESS_WHITE:
             node = min(nodes)
         else:

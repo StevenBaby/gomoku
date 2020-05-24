@@ -39,14 +39,16 @@ class Game(object):
 
     def reset(self):
         from .minmax import MinMaxNode as Node
+        # from .alphabeta import AlphaBetaNode as Node
 
         self.depth = 1
-        self.span = 1
-        self.top = 1000
+        self.span = 2
+        self.top = 5000
         self.root = Node(
             depth=self.depth,
             span=self.span,
             top=self.top)
+
         self.head = self.root
 
     def undo(self):
