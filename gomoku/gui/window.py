@@ -89,7 +89,7 @@ class Window(QMainWindow):
         self.ui.label.refresh()
 
     def check(self):
-        if self.game.head.score.finished:
+        if self.game.head.score.gameover:
             if self.game.head.turn == gomoku.CHESS_BLACK:
                 QMessageBox().information(self, 'Info', 'Victory!!!')
             else:

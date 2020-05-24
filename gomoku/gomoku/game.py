@@ -21,7 +21,7 @@ class Game(object):
         self.reset()
 
     def move(self, where=None):
-        if self.head.is_finished():
+        if self.head.gameover():
             return MOVE_STATE_WIN
 
         if where:
@@ -31,19 +31,17 @@ class Game(object):
         if not isinstance(node, Node):
             return node
 
-        # logger.debug("{:0.2f} - {}".format(node.score.score, node.score.finished))
-
         self.head = node
-        if self.head.is_finished():
+        if self.head.gameover():
             return MOVE_STATE_WIN
 
     def reset(self):
         from .minmax import MinMaxNode as Node
         # from .alphabeta import AlphaBetaNode as Node
 
-        self.depth = 1
+        self.depth = 3
         self.span = 2
-        self.top = 5000
+        self.top = 5
         self.root = Node(
             depth=self.depth,
             span=self.span,

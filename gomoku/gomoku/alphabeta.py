@@ -12,12 +12,12 @@ logger = tone.utils.get_logger()
 class AlphaBetaNode(Node):
 
     def alphabeta(self, node, alpha, beta, depth):
-        if depth == 0 or node.is_finished():
+        if depth == 0 or node.gameover():
             return node.get_score()
 
         nexts = node.detect_move(span=self.span, top=self.top)
         for next in nexts:
-            if next.is_finished():
+            if next.gameover():
                 return - next.get_score()
 
             value = self.alphabeta(next, alpha, beta, depth - 1)

@@ -12,6 +12,17 @@ logger = tone.utils.get_logger()
 
 class Direct(object):
 
+    def __init__(self, step=None, name=''):
+        self.step = step
+        self.name = name
+        self.chess = 0
+        self.death = 0
+        self.empty = 0
+        self.suffix = 0
+        self.block = 0
+        self.score = 0
+        self.gameover = False
+
     def compute_score(self):
         chess = self.chess
         death = self.death
@@ -19,7 +30,7 @@ class Direct(object):
         block = self.block
 
         if chess >= 5:
-            self.finished = True
+            self.gameover = True
             return 100000
         if death == 2:
             return 0
@@ -54,17 +65,6 @@ class Direct(object):
         score = self.compute_score()
         self.score = score
 
-    def __init__(self, step=None, name=''):
-        self.step = step
-        self.name = name
-        self.chess = 0
-        self.death = 0
-        self.empty = 0
-        self.suffix = 0
-        self.block = 0
-        self.score = 0
-        self.finished = False
-
 
 class Score(object):
     params = {
@@ -92,7 +92,7 @@ class Score(object):
         self.where = where
         self.cvalue = attrdict.loads(copy.deepcopy(self.params))
         self.rvalue = attrdict.loads(copy.deepcopy(self.params))
-        self.finished = False
+        self.gameover = False
         self.cscore = 0
         self.rscore = 0
         self.score = 0
@@ -163,14 +163,14 @@ class Score(object):
         self.collect(self.cvalue, reverse=False)
         direct = self.make(self.cvalue)
         self.cvalue.direct = direct
-        if any([var.finished for var in direct]):
-            self.finished = True
+        if any([var.gameover for var in direct]):
+            self.gameover = True
 
         # self.cscore = direct[0].score
         self.cscore = direct[0].score + direct[1].score
 
-        self.score = self.cscore
-        return
+        # self.score = self.cscore
+        # return
 
         self.collect(self.rvalue, reverse=True)
         direct = self.make(self.rvalue)

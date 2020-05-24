@@ -82,10 +82,10 @@ class Node(object):
         else:
             return ' '
 
-    def is_finished(self):
+    def gameover(self):
         if not self.score:
             return False
-        return self.score.finished
+        return self.score.gameover
 
     def has_chess(self, where):
         return self.board[where] != CHESS_EMPTY
@@ -98,7 +98,7 @@ class Node(object):
             return self._score
         if not self.score:
             return 0
-        return self.score.score * self.turn * -1
+        return self.score.score * self.turn
 
     def set_score(self, score):
         self._score = score
@@ -128,7 +128,7 @@ class Node(object):
         if self.has_chess(where):
             return MOVE_STATE_FULL
 
-        if self.is_finished():
+        if self.gameover():
             return MOVE_STATE_WIN
 
         board = self.board.copy()
@@ -146,9 +146,10 @@ class Node(object):
         if not nodes:
             return MOVE_STATE_NONE
         for node in nodes:
-            if node.is_finished():
+            if node.gameover():
                 return node
-            node.set_score(self.evaluate(node))
+            value = node.evaluate()
+            node.set_score(value)
         return self.select_node(nodes)
 
     def select_node(self, nodes):
@@ -158,5 +159,5 @@ class Node(object):
             node = max(nodes)
         return node
 
-    def evaluate(self, node):
-        return node.get_score()
+    def evaluate(self):
+        return self.get_score()

@@ -3,25 +3,37 @@
 import tone
 from .node import Node
 from . import functions
+from . import CHESS_BLACK
+from . import CHESS_WHITE
 
 logger = tone.utils.get_logger()
+
+MIN = CHESS_BLACK
+MAX = CHESS_WHITE
 
 
 class MinMaxNode(Node):
 
-    def minmax(self, node, depth):
-        if depth == 0 or node.is_finished():
-            return node.get_score()
+    def minmax(self, depth):
+        if depth == 0 or self.gameover():
+            return self.get_score()
 
-        nexts = node.detect_move(span=self.span, top=self.top)
+        nexts = self.detect_move(span=self.span, top=self.top)
         if not nexts:
-            return node.get_score()
+            return self.get_score()
+
+        if self.turn == MIN:
+            current = -float("inf")
+        else:
+            current = float('inf')
 
         for var in nexts:
-            var.set_score(
-                self.minmax(var, depth - 1)
-            )
-        return node.select_node(nexts).get_score()
+            value = var.minmax(depth - 1)
+            if var.turn == MAX and value > current:
+                current = value
+            elif var.turn == MIN and value < current:
+                current = value
+        return current
 
-    def evaluate(self, node):
-        return self.minmax(node=node, depth=self.depth)
+    def evaluate(self):
+        return self.minmax(depth=self.depth)
